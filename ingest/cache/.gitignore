@@ -1,0 +1,5 @@
+# arXiv e-print sources cached by pdf_extract.py. Regenerable, and large --
+# a few hundred papers is tens of megabytes of tarballs. An arXiv version is
+# immutable, so nothing here goes stale; delete the directory freely.
+*
+!.gitignore

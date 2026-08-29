@@ -1,0 +1,212 @@
+# Open questions — decision register
+
+Everything currently unresolved, ordered by what unblocks what. Each item says what it is,
+why it is open, what it costs to get wrong, and what I would do.
+
+**Environment note:** the Linux sandbox will not start on this machine, so anything marked
+**[shell]** has to run on your side. I can write and edit files, not execute them.
+
+---
+
+## Tier 0 — nothing downstream works until these exist
+
+### 0.1 `run_triage.py` does not exist
+
+**State.** `eval_triage.py score` reads `eval/predictions.jsonl`. Nothing in the repo writes
+that file. So there is no path from a labelled set to a measured charter — every "done means"
+number in `WEEK-1-PLAN.md` §6 is currently uncomputable.
+
+**What it needs to do.** Pull the labelled set, attach each paper's similarity band via
+`canon_index.py score`, dispatch the `triage` subagent in batches of 25 with the charter path
+and exemplar block, collect JSON lines. Output contract, read off `score_run()`: `arxiv_id`,
+`score`, `threshold` (falls back to `ADMIT` if absent), optional `reason` and `wildcard`.
+`HANDOFF.md` §6 estimates ~60 lines; that looks right.
+
+**Cost of delay.** Total. Every other decision in this file is about improving a measurement
+that cannot currently be taken at all.
+
+**What I'd do.** I write it; you run it **[shell]**. This is the single highest-value thing
+left and it does not depend on any other open question — the charter drafts, the protocol,
+and the firehose decision all change *what* gets measured, not whether the runner works.
+
+### 0.2 `apply_triage.py` does not exist, and more depends on it than the handoff says
+
+**State.** Known missing. Less visible is how much is dark behind it:
+
+- `papers.sqlite`'s `domain` column is null for every row, because assigning it is this
+  script's job. `eval_triage.py` now works around this with `_infer_domain()`, but the
+  workaround only covers those two call sites.
+- The ambiguous tier — new §5 in all four charters, `triage.md` emitting `"ambiguous": true`,
+  `coalition_audit.py` §6 counting tags and warning past 40% — is inert. It was built this
+  session and has never run.
+- `kb/` contains no cards at all. So `concordance_user.draft.jsonl` cannot be promoted (its
+  three entries have empty `papers` on all three), and `bridge-finder` has nothing to read.
+
+**Cost of delay.** The entire downstream half of the system is unexercised. Not urgent for
+Day 5–6, but worth knowing that "cards → concordance → bridges" has never once run end to end.
+
+---
+
+## Tier 1 — decide before harvesting or scoring
+
+### 1.1 The `compbio_methods` firehose — `SETS` in `arxiv_pull.py`
+
+**Decided 2026-08-28: option 3.** `SETS` is unchanged. `compbio_methods.md` §8 and `daily-ingest.md` §3 both record it — the daily cap is now documented as a permanent ranked cutoff for this domain, not a throughput control, so its standing backlog is expected and is not a signal to tighten the charter.
+
+**State (as it stood when this was open).** Open since Day 4, listed in `DAY-5-HANDOFF.md` §1 as the item that blocks a
+full-scale Day 5 run. Currently `["math.OC", "cs.LG", "cs.NE", "stat.ML"]`. `daily-ingest.md`
+caps curation at 10/domain/day and forbids raising the cap to clear a backlog.
+
+**What your 180 labels say** — measured, not estimated:
+
+| Option (from `compbio_methods.md` §8) | Admits retained, of 76 |
+|---|---|
+| 1. Narrow to `math.OC` + `cs.NE` | **11** |
+| 2. Require `cs.LG`/`stat.ML` to cross-list to `math.OC` or `q-bio.*` | **4** of ~30 |
+| 3. Ranked queue — cap becomes "top 10 by score today" | **76** |
+
+Two specifics behind those numbers. `cs.NE` appears **zero times** in 180 labelled papers,
+yet §8 treats it as half of option 1. And essentially none of the 17 pure-`cs.LG` papers you
+scored ≥4 carry any `math.*`/`stat.*`/`q-bio.*` cross-list, which is what guts option 2.
+
+**Cost of getting it wrong.** Options 1 and 2 discard 85%+ of your admissions to buy
+throughput, against an invariant that prices recall over precision 3:1. Option 3's cost is
+different in kind: it silently redefines the cap from throughput control to a ranking cutoff,
+and `daily-ingest.md` currently says the opposite.
+
+**What I'd do.** Option 3, plus an edit to `daily-ingest.md` making the reinterpretation
+explicit rather than tacit. **This also gates re-harvesting** — `DAY-5-HANDOFF.md` §3.1 is
+right that narrowing before a pull is much cheaper than filtering after.
+
+### 1.2 Label hygiene — `fixup_labels_stratum_domain.py` has never been run
+
+**State.** All 180 rows still carry raw values: `in` / `out` / `In` / `Borderline` /
+`borderlinne` / `pit`, and `domain: null` throughout.
+
+**Why it matters beyond tidiness.** `score_run()`'s borderline check is
+`st.startswith("border")` — case-sensitive. Three rows are capitalized `"Borderline"`, so
+they are invisible to it. Your borderline stratum is 32 rows total, so that is ~10% of the
+one metric `WEEK-1-PLAN.md` §6 calls "the number that actually matters."
+
+**Two parts, different owners.** I can normalize the strata now with five `replace_all`
+edits, no shell needed. The `domain` backfill needs the script **[shell]** — but it is
+deferrable, since `calibrate()` infers domain fresh each run and `score_run()` never reads it.
+
+**Yours alone:** `2608.07528`, stratum `"pit"`. The script won't guess at it. It's the
+probing/LLM-interpretability paper, *"The Knowing-Saying Gap: When Probes See Errors that
+Confidence Misses"*, `my_score: 2`.
+
+### 1.3 `calibrate` has not been re-run since the domain-scoping fix **[shell]**
+
+**State.** The NEAR=0.57 / FAR=0.59 result — "distributions overlap almost completely" — was
+computed *before* the fix, against the pooled 8,320-paper canon instead of the ~2,080 papers
+of one domain. That is exactly the comparison that would wash out separation.
+
+**What to watch.** If separation is still inverted after re-running per-domain, that is a
+much cleaner signal about the canon or the domain map than the pre-fix number was, and
+`DAY-5-HANDOFF.md` §3.5 is right that the honest response is to fix those rather than ship a
+band that adds noise.
+
+### 1.4 Adopt `LABEL-USE-PROTOCOL.md` for `compbio_methods`?
+
+**Decided 2026-08-28: adopt.** Both drafted changes are live in `charters/compbio_methods.md` (confirmed already present when re-checked this session — the `.pass4.md` promotion had already happened; only the file's own header was stale, now corrected). Consequence: the 180-row label set is now a development set for this domain specifically, since it partly drafted the charter. §1.6's fresh-set question is no longer hypothetical for `compbio_methods` — any recall/precision claim about this domain against those same rows would be circular. `stats` is unaffected (zero label-derived changes there, still a valid target as-is).
+
+**State (as it stood when this was open).** Narrower than when I first raised it. `stats.pass4.md` ended up with **zero**
+label-derived changes — your 32 stats rows confirmed the existing criteria rather than adding
+to them. So `stats` is uncontaminated and remains a valid eval target regardless.
+
+**The question is now only about `compbio_methods`** and the two drafted changes in
+`PASS-4-DRAFTS.md` §1: the §3 applied-ML-systems exclusion (n≈90) and the §2
+property-not-result clause (n=17).
+
+**If you adopt:** R8's rename of `eval/labels.jsonl` → `eval/labels.dev.jsonl` happens first,
+because `score` defaults to that path and will otherwise produce a confident meaningless
+number for that domain. **If you decline:** `compbio_methods` stays silent on the genre that
+is 57% of what triage will actually meet.
+
+### 1.5 Which domains does round one actually evaluate?
+
+**State.** Never settled; my first recommendation was wrong and I withdrew it. Per-domain
+label counts, by primary category:
+
+| Domain | Rows | Admits | Usable for per-charter tuning? |
+|---|---|---|---|
+| `compbio_methods` (`math.OC`/`cs.*`) | ~127 | 35 | Yes, comfortably |
+| `stats` | 32 | 22 | Marginal — 10 rejections is thin |
+| `probability` | 16 | 11 | Aggregate only |
+| `compbio_mechanism` | **5** | 1 | **No** |
+
+**The bind.** `compbio_mechanism` carries the popgen/phylogenetics admission — a decision
+made against your stated "I do not work on evolutionary biology" on bridge-finding grounds.
+It is the charter most in need of measurement and the one with five labelled papers. Fixing
+that needs a targeted `sample --append` draw restricted to `q-bio.*`, which is its own
+labelling sitting.
+
+### 1.6 Fresh test set — and fix the sampler ordering before drawing it
+
+**State.** Proposed, undecided. If the labels become a development set for any charter, a
+fresh 60–80 is needed for the actual measurement.
+
+**Do this first if you draw one.** Rows 110–180 came from the fixed banded `sample()` and
+arrived in same-band streaks — rows 105–133 are 24 admits out of 29, rows 134–147 are
+fourteen consecutive rejections. Scoring in streaks invites anchoring against neighbours
+instead of against the scale, which is the drift risk you flagged. Shuffling `sample()`'s
+output after banding costs one line and removes it.
+
+---
+
+## Tier 2 — charter obligations
+
+### 2.1 `stats.pass4.md` — promote, or hand-rewrite first
+
+All six judgment calls are yours; the prose is still mine. `README.md` asks for handwriting.
+§2 and §3 are where the gap matters — particularly §3's first bullet, which now carries your
+A4 reading 2 in my words. Promote with `mv` when you're satisfied.
+
+### 2.2 Three charters have no rewrite-prep at all
+
+`stats.rewrite-prep.md` exists. `probability.md`, `compbio_mechanism.md` and
+`compbio_methods.md` have nothing equivalent — no side-by-side of charter rules against the
+strike reasons they were inferred from. `compbio_mechanism` is the one I'd build next: it
+holds the largest inference-from-strike-reasons in the set, and §1.5 above says the labels
+cannot help there.
+
+### 2.3 Deferred by the protocol's own floor
+
+- **AI-for-science flag** (`PASS-4-DRAFTS.md` §1.3). Lines 86 and 108 scored 4, lines 17 and
+  46 scored 2–3 — a plausible contribution-vs-review boundary. n=4, below R1's floor of 5.
+  Re-examine against the fresh set.
+- **Line 80** — cytoskeletal statistical-mechanical framework, `q-bio.CB/MN/SC`, scored 2
+  despite sitting in the centre of `compbio_mechanism.md` §2. Re-read candidate, n=1.
+- **Line 109** — *"Evaluating RL Explainability Methods…"*, stratum `in`, score 2. The only
+  internal contradiction in 180 rows. Likely a keying slip; worth confirming.
+
+---
+
+## Tier 3 — small, cheap, easy to lose
+
+- **`vetting-stats.md` line 334.** `mark: Surgical guidelines` with an empty `reason:` — the
+  reason landed in the mark field. Struck correctly by the leading "s", but the strike reason
+  is lost, and strike reasons become the negative exemplars in the triage prompt.
+- **`vetting-compbio_methods.md` line 148** (`W4408399347`). Never marked, so it sits in
+  Tier 1 by default rather than by review.
+- **`research-net/To`** — empty stray file, almost certainly a shell redirect typo.
+- **Superseded files still in place** — `charters/compbio.md`, `charters/compbio_genomics.md`,
+  `claude-config/agents/compbio-curator.md`, `compbio-genomics-curator.md`,
+  `canon/vetting-compbio_genomics.md`. Deliberately marked rather than deleted; worth
+  confirming that is still what you want before they get read by mistake.
+- **Domain-map coverage gap.** Seven labelled papers have a primary category in no domain's
+  `SETS` — `math.NA`, `math.NT`, `math.CO`, `math.GT` — and **all seven scored ≥4**. n=7 is
+  below the protocol's floor for charter text, but this is a harvest-coverage question rather
+  than a scope question: those papers would never be pulled at all. Worth a look at
+  `domain_map.yaml` independently of any charter.
+
+---
+
+## If I had to pick three
+
+1. **`run_triage.py`** (0.1) — unblocks measurement entirely, depends on nothing else.
+2. **The firehose** (1.1) — gates re-harvesting, and the numbers point somewhere different
+   from what §8 assumed.
+3. **Label hygiene** (1.2) — cheap, and 10% of your borderline stratum is currently invisible
+   to the metric that matters most.

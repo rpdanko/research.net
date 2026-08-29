@@ -1,0 +1,304 @@
+# research-net — status and to-do
+
+Written 2026-08-28. Supersedes `WEEK-3-PLAN.md` as the live to-do; that file stays as the
+record of what Week 3 opened with.
+
+Everything below was checked against the repo, not carried forward. Where a number is
+derived it says from what. Where something is inferred it says so.
+
+**Environment.** The Linux sandbox does not start on the assistant side — **[shell]** items
+run on your machine. Every script runs with `python3`, not `python` (see §3.5).
+
+---
+
+## 1. The philosophy, as the repo states it
+
+Not a summary for its own sake — §4 is a list of places the project has drifted from these,
+and the drift is only visible against them.
+
+1. **Replace impressions with numbers.** The canon exists so charters rest on exemplars
+   rather than adjectives; the rubric anchors exist for the same reason; `eval_triage.py`
+   and `card_eval.py` exist so "the schema needs revising" is a measurement rather than a
+   feeling. `README.md` on card accuracy: run it *before* the hand-check step, "otherwise
+   'the schema needs revising' is an impression."
+2. **The human's judgment is the scarce input, and it is protected structurally.** Five
+   files must be in your handwriting and are `deny`-listed — "an agent that can edit its own
+   rubric will eventually edit it toward agreeableness."
+3. **No gate goes live until you have personally audited it for two weeks.** "A gate you
+   don't trust is worse than no gate: it discards work silently and you never learn what
+   you lost."
+4. **Recall over precision, ~3:1.** "A wrongly admitted paper costs three cents. A wrongly
+   rejected paper is gone and nobody learns it existed."
+5. **Deskilling is the failure with no natural alarm.** The raw-abstract habit, the digest's
+   five raw abstracts, and `recode.py`'s quarterly blind re-code exist for one thing: the
+   human half degrading quietly while every gate reports healthy.
+6. **Fabrication needs mechanical checks, not judgment.** Invariants 17–19. Pre-registration
+   verified by mtime and hash, because "models are excellent at explaining results after the
+   fact."
+7. **Write the reasoning down so a later reader can check it.** Every invariant carries its
+   rationale; every charter carries a "what changed this pass"; strike reasons are recorded
+   because they become the negative exemplars.
+
+---
+
+## 2. Where the project actually is
+
+**Phase.** `README.md`'s table puts Weeks 2–3 at: *one* curator, the domain you know best,
+20 cards hand-checked with `card_eval.py`. Week 4 adds the remaining curators "once the
+schema stops moving."
+
+**Actual.** Four curators have run. 28 validated cards: `probability` 10,
+`compbio_methods` 9, `compbio_mechanism` 6, `stats` 3. `card_eval.py` does not exist. See
+§4.1 — this is the most consequential deviation in the project.
+
+**Measured, and real.** Triage is the one component with a number. Latest scored run
+(`20260827-214656`), corrected for the `2509.18530` label flip: **recall 0.903, precision
+0.699, F-beta(3) 0.877, 7 misses of 180.** Both at or above target (0.90 / 0.60). Caveat in
+§4.6 — part of the precision gain traces to an unrecorded prompt edit.
+
+**Proven end to end, once.** `bridge-finder` ran manually, capped at 3, produced two
+candidates; the skeptic killed both on specific reasoning. Zero survivors from one run
+against two populated domains is a legitimate result, not a signal.
+
+**Not started.** `math-scout` has never run, so `kb/concordance.jsonl` is empty and
+`concordance.merged.jsonl`'s three rows are all yours. No proposals, no referees, no probes,
+no digests. Cron is correctly still off.
+
+**Consistent finding worth carrying forward.** None of your three planted concordance
+objects — belief propagation, Dirichlet process, Kingman's coalescent — appears by name or
+alias anywhere in the 28 cards. Expect the next `bridge-finder` run to find its own
+structure, as it did with `b-2608-001`/`002`, not the planted bridges.
+
+**Backlogs, deliberately unspent.** 26 admitted `compbio_methods` papers (all pre-clause
+admissions), 8 `probability`, and a 5,275-row untriaged harvest from 2026-08-24.
+
+**Still unwritten** (`README.md` §"Not yet written"): `card_eval.py`, `concordance_stats.py`,
+`check_skeptic_rate.py`, `verify_proposals.py`, `probe_guard.py`, `retranslate.py`. Only the
+first is due now; the rest are phase-gated.
+
+---
+
+## 3. Verified state of the moving parts
+
+| Thing | State |
+|---|---|
+| Labels | 180 rows, strata normalized, `domain` backfilled, zero nulls |
+| Per-domain labels | `compbio_methods` 101/26 admits · `stats` 40/26 · `probability` 29/17 · `compbio_mechanism` 10/3 |
+| Charters | All four live; `stats` pass-4 promoted; `compbio_mechanism` has a rewrite-prep with all four rulings made |
+| Canon | Tier 0/1/2 built; `compbio_mechanism` worksheet edited today, **not yet propagated** |
+| Scripts | `run_triage`, `apply_triage`, `pdf_extract`, `rebuild_index` all written and exercised |
+| Sampler | `random.shuffle(picks)` fix applied; safe to draw a fresh set |
+| `settings.json` | Correct — `Edit` denies present, `Bash` allows use `python3` |
+| `strike_superseded` | Implemented in `canon_index.py` (EVAL-01 §4B/B2 landed at some point) |
+
+---
+
+## 4. Where the project has drifted from its own philosophy
+
+These are the findings. Each is a place the repo's stated method and its actual state
+disagree.
+
+### 4.1 Four curators ran before the schema was measured — violates philosophy 1 and 3
+
+The phasing table sequences Weeks 2–3 the way it does for a stated reason: measure card
+accuracy *first*, because the schema will need revising and you want to find out "now, with
+a number." Week 4 is explicitly gated on "once the schema stops moving."
+
+What happened instead: all four curators ran, 28 cards were produced, and the schema was
+checked by direct hand-review. That hand-review was real work and it caught genuine errors
+(the DiffGRM strike, two `stats` charter mismatches). But it is exactly the "impression"
+the phasing exists to replace, and it is not repeatable — `README.md` says so in as many
+words.
+
+**The cost is not sunk.** If `card_eval.py` shows a field is weak, the 28 cards were
+extracted under the weak schema and some fraction will need redoing. That is the risk the
+ordering was designed to avoid, and it is now priced in rather than avoided.
+
+**This does not mean stop.** It means the first card measurement is more urgent than it
+would have been, not less, and its result now has to answer a second question: not just
+"does the schema need revising" but "do any of the 28 need re-extraction."
+
+### 4.2 `focus.md` is still the empty template
+
+One of the three channels running from you *into* the system. `README.md` says write it the
+same day as the charters, "so you feel the difference between the two." It has never been
+written — the file on disk is the shipped template with all four sections still as HTML
+comments.
+
+`CLAUDE.md` is explicit about how to read this: *"If one of them is empty for months, that
+is the finding — not the absence of a finding."*
+
+Its practical effect today is small — it weights `bridge-finder` and `math-scout`, and
+`math-scout` has never run. Its effect at Weeks 5–7 is not small: it is the only thing that
+orients bridge search toward what you are actually stuck on, and invariant 13 deliberately
+prevents it from ever gating, so an empty file is a genuinely unweighted search. Writing it
+is yours alone and cannot be delegated.
+
+### 4.3 The repo has no version history
+
+`HANDOFF.md` §1 lists `git init && git add -A && git commit -m "scaffold"` as a setup step.
+It was never run. There is no `.git`.
+
+For a project whose seventh stated principle is "write the reasoning down so a later reader
+can check it," this is the load-bearing omission, and **it has already cost real
+information twice today**:
+
+- The `triage.md` scoring edit behind the precision gain (§4.6) is unrecoverable. The
+  evidence that it happened is indirect — a systematic downward re-scoring visible in the
+  run outputs — and what was actually changed cannot be recovered.
+- `strike_superseded` appears implemented in `canon_index.py` with no record of when or in
+  what state the rest of B2 landed.
+
+Pruning `OPEN-QUESTIONS.md` today required a hand-rolled `.pre-prune.bak` for the same
+reason. That is version control done badly by hand.
+
+### 4.4 Document staleness is systemic, not incidental
+
+Today alone: `EVAL-01-FINDINGS.md` was two score runs out of date and reported the project
+as below target on both headline metrics when it is above on both; `OPEN-QUESTIONS.md` had
+an entire resolved tier and five of six resolved Tier-3 bullets still presented as open;
+`OPEN-QUESTIONS.md` §1.5's per-domain table was wrong in **all four rows**;
+`WEEK-2-HANDOFF.md` is described by its own successor as containing stale file claims.
+
+The pattern is specific: **numbers get written into prose and never re-derived.** Every one
+of these documents was correct when written. The failure is that the prose outlives the
+measurement and nothing links them.
+
+Worth a structural response rather than another cleanup pass. The cheapest version: any
+document quoting a metric names the run file it came from, so a reader can check whether a
+newer one exists. `EVAL-01-FINDINGS.md` now does this; nothing else does.
+
+### 4.5 The repo's own commands do not run on this machine
+
+**78 occurrences of bare `python ingest/…` across 16 files**, including six agent prompts
+(`stats-curator`, `prob-curator`, both compbio curators, `math-scout`, `bridge-finder`) and
+all three skills. `settings.json` was fixed in Week 2 — its `Bash` allows use `python3` —
+but the documentation and the prompts were not.
+
+The consequence is not cosmetic: a dispatched curator following its own instructions runs a
+command that fails, *and* the `python3` allow-list means the failing form is not even
+permitted. Every agent prompt that tells an agent to run a script is currently wrong.
+
+### 4.6 The precision gain is real but its cause is unrecorded
+
+Precision went 0.570 → 0.607 → 0.688 across three runs. `EVAL-01-FINDINGS.md` §6
+pre-registered exactly this and said not to believe it un-investigated.
+
+Investigated today: comparing triage runs `194728` and `203053` on identical inputs — same
+labels, batches, routing, bands and thresholds — 13 of 35 checked scores changed and **11 of
+13 moved down**, seven of them 5→4, with a visible shift in reason style. That is a prompt
+edit, not sampling noise, so §2's round-up diagnosis survives and the gain is real. But two
+papers moved *up* against the trend, so ordinary run-to-run variance sits on top and no
+single run's precision should be read to three decimals.
+
+What is missing is the record of what was edited. See §4.3.
+
+### 4.7 Three of four scripts still carry placeholder emails — and the leakiest one has no guard
+
+| Script | Email | Guard |
+|---|---|---|
+| `canon_harvest.py` | set | present |
+| `citation_overlap.py` | `YOUR_EMAIL_HERE` | present — will refuse |
+| `verify_citations.py` | `""` | present — will refuse |
+| `arxiv_pull.py` | `YOUR_EMAIL_HERE` | **absent** |
+
+`arxiv_pull.py` is the highest-volume caller in the system — the 5,275-row harvest ran
+through it — and it is the one script that will happily run anonymously.
+
+This is not housekeeping. `README.md` singles out `verify_citations.py` as the one that
+matters most, because *"a 429 mid-scan looks exactly like a fabricated citation, and that is
+the one confusion the citation gate must never make."* Invariant 17 rests on that
+distinction. Two of the three scripts touching OpenAlex will hard-exit the first time they
+are called, which is safe, and the third has been running anonymously against arXiv for
+weeks, which is not.
+
+### 4.8 `CLAUDE.md` says "Currently in Week 1"
+
+It is the file that loads automatically into every session, and it opens every agent's
+context with a phase marker three weeks stale. Cheapest fix in this document.
+
+---
+
+## 5. To-do
+
+Ordered by what the project's own philosophy says comes first, not by size.
+
+### Tier 0 — the integrity floor. Cheap, and everything else rests on it.
+
+1. **`git init && git add -A && git commit`** **[shell]**. Thirty seconds. It has already
+   cost the project two unrecoverable changes (§4.3). Do this before any further edits, so
+   today's work is the first commit rather than part of an untracked pile.
+2. **Sweep `python ` → `python3 `** across the 16 files (§4.5). The six agent prompts matter
+   most — an agent cannot run what it is told to run. Mechanical; no judgment needed.
+3. **Set the email in `arxiv_pull.py`, `citation_overlap.py`, `verify_citations.py`, and add
+   the missing `YOUR_EMAIL_HERE` guard to `arxiv_pull.py`** (§4.7), copying the pattern the
+   other three already use.
+4. **Correct `CLAUDE.md`'s phase marker** and point it at this file (§4.8).
+5. **`python3 ingest/canon_tier.py apply`** **[shell]**, then re-render exemplars. Today's
+   `compbio_mechanism` worksheet edits — two strike reversals and ten rewritten reasons —
+   are inert until this runs. The two reversed papers are still eligible for the negative
+   block, which is the exact contradiction the ruling removed.
+
+### Tier 1 — the thing the phase is actually for
+
+6. **Write `ingest/card_eval.py`**, mirroring `eval_triage.py`'s real shape (`_infer_domain`,
+   `sample`, `label`, `_save`/`_resolve`, a `score_run` equivalent, `diff`, argparse). The
+   assistant can write it without shell access. Carry the sampler lesson across: shuffle the
+   final output before writing, so it does not reproduce the streaking bug.
+7. **Run `sample` → `label` → `score` against the 28-card KB** **[shell]**. Score on field
+   *equivalence*, not exact string match. Note the inversion: `stats` is your best *charter*
+   eval target (40 rows, uncontaminated) and your worst *card* target (3 cards). Pool across
+   all 28, or draw from `probability` (10).
+8. **Answer both questions with the number.** Does the schema or curator prompt need
+   revising — and, per §4.1, do any of the existing 28 cards need re-extraction under a
+   revised schema?
+
+### Tier 2 — the channel only you can open
+
+9. **Write `focus.md`** (§4.2). Half a page. The "Stuck on" section is the highest-value
+   field in the file; an obstruction is a search target in a way an interest is not. Do it
+   before `math-scout` is enabled at Week 5, not after.
+
+### Tier 3 — open questions, in dependency order
+
+10. **Record what changed in `triage.md`** (§4.6, `OPEN-QUESTIONS.md` §1.7). Reconstruct it
+    while the runs are fresh; after Tier 0 item 1 this becomes recoverable going forward,
+    but this particular change is not.
+11. **`compbio_mechanism`'s admitted count** **[shell]** — one sqlite query; decides whether
+    a whole `q-bio.*` labelling sitting is needed.
+12. **`calibrate()` per-domain** **[shell]** — every figure in `EVAL-01-FINDINGS.md` is
+    pooled across four domains. Correct that file with the result.
+13. **Write `§3`'s molecular-scale criterion into `charters/compbio_mechanism.md`.** Ruled
+    today; the text is yours to write per `README.md`. Note when writing it that popgen
+    *theory* is unaffected — Wright-Fisher and Moran processes are mathematical objects, and
+    a triage agent will assume otherwise unless §3 says so.
+14. **Rewrite-prep for `probability.md` and `compbio_methods.md`.**
+15. **A home for the metatool shelf** — `EVAL-01-FINDINGS.md` §5 step 2 named this after
+    SGHA and the linear-algebra notes; it recurred today with the LLM-NERRE paper. Papers
+    useful to *this project* but not KB material keep arriving as misses because nowhere
+    holds them.
+
+### Tier 4 — deliberately not now
+
+- The three backlogs (26 `compbio_methods`, 8 `probability`, 5,275 untriaged). Model-call
+  spend is a deliberate decision, not a reflex; none of these should be spent against before
+  item 8 answers whether the schema is stable.
+- A fresh held-out eval set for `compbio_methods`. Needed — the 180 rows are a dev set for
+  that domain — but the sampler fix landed today and nothing is blocked on it this week.
+- `math-scout`, and the remaining six unwritten scripts. Phase-gated, correctly.
+- **The Week 4 marker to watch:** `README.md` says start the raw-abstract habit at Week 4,
+  "not at Week 10 — the point at which you stop reading the stream yourself is the point the
+  deskilling clock starts." Four curators are already running, so by the phasing table's own
+  logic that clock has arguably started early. `ingest/raw_sample.py` exists.
+
+---
+
+## 6. Done means
+
+1. The repo has a commit history, and its documented commands run.
+2. `card_eval.py` exists and has produced the first curator-accuracy number this project has
+   ever had.
+3. That number has driven one decision about the schema — including, legitimately, the
+   decision to change nothing.
+4. `focus.md` says something true.
+5. No document in the repo quotes a metric without naming the run it came from.

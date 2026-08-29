@@ -1,0 +1,1 @@
+{"arxiv_id": "2608.20318", "domain": "compbio_methods", "score": 2, "band": "mid", "threshold": 4, "wildcard": false, "ambiguous": false, "reason": "Benchmark suite for LLM agents; charter §3 excludes applied ML systems (benchmarks, agent frameworks)."}

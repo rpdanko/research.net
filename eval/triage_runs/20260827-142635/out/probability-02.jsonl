@@ -1,0 +1,5 @@
+{"arxiv_id": "2608.09856", "domain": "probability", "score": 4, "band": "mid", "threshold": 4, "wildcard": false, "ambiguous": false, "reason": "Limit theorems for Galton-Watson forests; charter §2 stochastic processes."}
+{"arxiv_id": "2608.14978", "domain": "probability", "score": 1, "band": "far", "threshold": 5, "wildcard": false, "ambiguous": false, "reason": "Delay-differential equations; charter §2 requires stochastic processes."}
+{"arxiv_id": "2608.11071", "domain": "probability", "score": 4, "band": "mid", "threshold": 4, "wildcard": false, "ambiguous": false, "reason": "Interacting particle system with random neighbor sampling; charter §2."}
+{"arxiv_id": "2608.09092", "domain": "probability", "score": 4, "band": "mid", "threshold": 4, "wildcard": false, "ambiguous": false, "reason": "Limit theorem with Haar coupling; convergence in charter §2."}
+{"arxiv_id": "2606.07914", "domain": "probability", "score": 3, "band": "mid", "threshold": 4, "wildcard": false, "ambiguous": false, "reason": "Mixture identifiability; primarily statistical methods not probability."}

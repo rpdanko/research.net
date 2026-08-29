@@ -1,0 +1,2 @@
+{"arxiv_id": "2408.14242", "domain": "compbio_mechanism", "score": 5, "band": "mid", "threshold": 4, "wildcard": false, "ambiguous": false, "reason": "Statistical-mechanical model of cytoskeletal mechanism; exemplifies §2 criterion 5."}
+{"arxiv_id": "2608.14757", "domain": "compbio_mechanism", "score": 3, "band": "mid", "threshold": 4, "wildcard": false, "ambiguous": true, "reason": "[ml-bio-benchmark-load-bearing] ML on pathology imaging; biology's structural role unclear per §2.4."}
