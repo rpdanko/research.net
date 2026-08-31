@@ -5,7 +5,7 @@ Four numbers decide whether to trust the gates. Read the SHAPE of the
 distributions, not the means -- an axis where 80% of scores land on one
 value is not measuring anything, it is decorating.
 
-    python ingest/review_audit.py --month
+    python3 ingest/review_audit.py --month
 
 Sections 1-3 check the gate against itself: is it discriminating, is it
 rejecting anything, are the probe escape hatches in use. Section 4 checks it
@@ -189,7 +189,7 @@ def error_types(days):
 
     if tags.get("fabricated-citation", 0):
         print(f"\n   ^ {tags['fabricated-citation']} fabricated citation(s). See")
-        print("     `python ingest/verify_citations.py report --month` for which")
+        print("     `python3 ingest/verify_citations.py report --month` for which")
         print("     agent. Concentration in one agent is a prompt problem.")
 
     print("\n   by agent:")
@@ -229,7 +229,7 @@ def gate_agreement(days):
     if not rows:
         print("   No verdicts logged this period.")
         print("   Every number above describes the gate agreeing with itself.")
-        print("   `python ingest/log_verdict.py pending`")
+        print("   `python3 ingest/log_verdict.py pending`")
         return
 
     scored = [r for r in rows if isinstance(r.get("gate", {}).get("mean_score"), (int, float))]

@@ -40,7 +40,7 @@ description warns; the name is the interface. Worth hardening for symmetry.
 ### 0.2 Fix the label strata
 
 ```bash
-python ingest/fixup_labels_stratum_domain.py
+python3 ingest/fixup_labels_stratum_domain.py
 ```
 
 Backs up to `eval/labels.jsonl.bak`, normalises `stratum` to
@@ -78,7 +78,7 @@ the default path is correct.
 ### 1.1 Re-run calibrate
 
 ```bash
-python ingest/eval_triage.py calibrate
+python3 ingest/eval_triage.py calibrate
 ```
 
 The earlier NEAR=0.57 / FAR=0.59 result was computed pre-fix against the whole pooled
@@ -113,7 +113,7 @@ compare two runs, and it is only meaningful if the first one is a genuine before
 ### 2.1 Prepare all domains
 
 ```bash
-python ingest/run_triage.py prepare
+python3 ingest/run_triage.py prepare
 ```
 
 **Expect:** ~8 batches over 4 domains, ~180 papers, a printed band histogram and a
@@ -151,7 +151,7 @@ One invocation per batch, not per paper — same rule as `daily-ingest.md`.
 ### 2.4 Check coverage before collecting
 
 ```bash
-python ingest/run_triage.py status
+python3 ingest/run_triage.py status
 ```
 
 **Expect** every batch showing `ok` with counts matching. `part` means the agent dropped
@@ -161,7 +161,7 @@ proceeding.
 ### 2.5 Collect
 
 ```bash
-python ingest/run_triage.py collect
+python3 ingest/run_triage.py collect
 ```
 
 Validates hard: every ID present exactly once, scores are ints 0–5, thresholds forced
@@ -176,7 +176,7 @@ back to the banded values, `ambiguous` present, far-band ≥4 forced to `wildcar
 ### 2.6 Score
 
 ```bash
-python ingest/eval_triage.py score
+python3 ingest/eval_triage.py score
 ```
 
 **This is the baseline.** Read against `WEEK-1-PLAN.md` §6: recall ≥0.90, precision
@@ -205,11 +205,11 @@ The path stays `charters/stats.md`, so nothing downstream needs touching.
 ### 3.2 Re-run and compare
 
 ```bash
-python ingest/run_triage.py prepare
+python3 ingest/run_triage.py prepare
 # dispatch as in 2.3, then:
-python ingest/run_triage.py collect
-python ingest/eval_triage.py score
-python ingest/eval_triage.py diff
+python3 ingest/run_triage.py collect
+python3 ingest/eval_triage.py score
+python3 ingest/eval_triage.py diff
 ```
 
 `diff` compares the last two runs and will tell you what your six rulings actually did.

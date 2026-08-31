@@ -197,7 +197,7 @@ def harvest(resume):
     for d, n in counts.items():
         print(f"{d:<14} {n:>6,}")
     print(f"{'TOTAL':<14} {sum(counts.values()):>6,}")
-    print(f"\nWrote {outfile}\nNext: python ingest/canon_tier.py --stats")
+    print(f"\nWrote {outfile}\nNext: python3 ingest/canon_tier.py --stats")
 
 
 def _abstract(inv):

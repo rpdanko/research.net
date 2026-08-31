@@ -139,11 +139,11 @@ The four items above are setup. These three are the ones that do not end, and th
 
 | | What | When | Effort |
 |---|---|---|---|
-| A | **Log a verdict on each promoted proposal** — `python ingest/log_verdict.py log <id>` | weekly, ~2/wk | 4 min |
+| A | **Log a verdict on each promoted proposal** — `python3 ingest/log_verdict.py log <id>` | weekly, ~2/wk | 4 min |
 | B | **Read the five raw abstracts** in the digest. Not skim — read | weekly | 3 min |
-| C | **Spot-check three citations** — `python ingest/verify_citations.py sample --n 3`. The script proves a paper exists; only you can tell whether it says what it was cited for | weekly | 3 min |
+| C | **Spot-check three citations** — `python3 ingest/verify_citations.py sample --n 3`. The script proves a paper exists; only you can tell whether it says what it was cited for | weekly | 3 min |
 | D | **Rewrite `focus.md`** whenever it stops being true. The skill flags it at six weeks | ~monthly | 10 min |
-| E | **Re-code 20 of your own past judgments, blind** — `python ingest/recode.py`. Below 0.70 agreement, stop and read the disagreements before adjusting anything downstream | quarterly | 35 min |
+| E | **Re-code 20 of your own past judgments, blind** — `python3 ingest/recode.py`. Below 0.70 agreement, stop and read the disagreements before adjusting anything downstream | quarterly | 35 min |
 
 About ten minutes a week and half an hour a quarter. None of it is enforceable and that is the point: a system that could make you do these would not need you in it. What *is* instrumented is their absence — `coalition_audit.py` §4 reports unlogged proposals and unread digests, `log_verdict.py pending` says so every week, and `verify_citations.py report` shows an empty relevance table. Treat a month of skipped verdicts as a health-check failure rather than a busy month; the effect is identical either way.
 
@@ -162,16 +162,16 @@ Two things from it that belong here because they are obligations rather than ste
 
 1. **The charters are still agent-written, through three passes.** Day 5 measures them, so rewriting them in your own hand comes first. `DAY-5-HANDOFF.md` §1 has the minimum viable version if time is short.
 2. **`eval_triage.py sample` used to not actually stratify — fixed.** It assigned strata by index position over a random draw rather than by anything resembling similarity to the canon. Now fixed to band candidates against the canon index (`near`/`mid`/`far` → `expect_in`/`expect_out`/`borderline`) before assigning strata. See `DAY-5-HANDOFF.md` §3.2 for the original bug and the fix.
-3. **Labelling is mid-flight (180 rows) and needs a one-time fixup before you trust `calibrate` again.** `papers.sqlite`'s `domain` column is null pre-triage, which was silently degrading canon-similarity scoring to the whole pooled canon instead of each paper's own domain. Fixed in code; the already-written rows need `python ingest/fixup_labels_stratum_domain.py` run once. See `DAY-5-HANDOFF.md` §6 for the full state and exact resume commands.
+3. **Labelling is mid-flight (180 rows) and needs a one-time fixup before you trust `calibrate` again.** `papers.sqlite`'s `domain` column is null pre-triage, which was silently degrading canon-similarity scoring to the whole pooled canon instead of each paper's own domain. Fixed in code; the already-written rows need `python3 ingest/fixup_labels_stratum_domain.py` run once. See `DAY-5-HANDOFF.md` §6 for the full state and exact resume commands.
 
 <details>
 <summary>Days 1–2, for reference (complete)</summary>
 
 ```bash
-python ingest/canon_harvest.py resolve      # -> canon/domain_map.generated.yaml
-python ingest/canon_harvest.py harvest      # ~6000 works, free, ~30 min
-python ingest/canon_tier.py --stats         # museum check — read before vetting
-python ingest/canon_tier.py nominate        # emits canon/vetting-*.md
+python3 ingest/canon_harvest.py resolve      # -> canon/domain_map.generated.yaml
+python3 ingest/canon_harvest.py harvest      # ~6000 works, free, ~30 min
+python3 ingest/canon_tier.py --stats         # museum check — read before vetting
+python3 ingest/canon_tier.py nominate        # emits canon/vetting-*.md
 ```
 
 Outcome: 8,320 canon records across four domains (2,080 each, no gaps), vetting applied, `canon/index.npz` built.

@@ -29,7 +29,7 @@ ROOT = Path(__file__).parent.parent
 CANON = ROOT / "canon"
 DB = ROOT / "ingest" / "papers.sqlite"
 API = "https://api.openalex.org"
-MAILTO = "YOUR_EMAIL_HERE"
+MAILTO = "robinpdanko@gmail.com"
 
 STRONG = 2      # canon references at or above this = strong in-scope signal
 

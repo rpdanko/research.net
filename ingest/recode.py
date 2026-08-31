@@ -27,11 +27,11 @@ Falling intra-rater agreement over months is the deskilling signal from
 HYBRID-SYSTEM-REVIEW.md 3.3, made numerical. It is the only instrument here that
 points at you rather than at the machine.
 
-    python ingest/recode.py sources
-    python ingest/recode.py sample --source verdicts --n 20 --min-age-weeks 6
-    python ingest/recode.py judge <session>       # blind; prior pass hidden
-    python ingest/recode.py score <session>
-    python ingest/recode.py trend
+    python3 ingest/recode.py sources
+    python3 ingest/recode.py sample --source verdicts --n 20 --min-age-weeks 6
+    python3 ingest/recode.py judge <session>       # blind; prior pass hidden
+    python3 ingest/recode.py score <session>
+    python3 ingest/recode.py trend
 
 BUDGET: about 30-40 minutes, once a quarter. This is the most expensive thing
 this repo asks of you and the only one that measures the thing everything else
@@ -242,7 +242,7 @@ def cmd_sample(a):
                    "pass1_date": r.get("date", ""), "pass2": None} for r in pick],
     }, indent=1))
     print(f"session {sid}: {len(pick)} items from '{a.source}'")
-    print(f"  python ingest/recode.py judge {sid}")
+    print(f"  python3 ingest/recode.py judge {sid}")
     print("\nYour original judgments are in the file and will not be shown to you")
     print("during `judge`. Do not open it. The whole measurement is the blinding,")
     print("and there is no way to un-see a prior judgment once you have looked.")
@@ -281,7 +281,7 @@ def cmd_judge(a):
         path.write_text(json.dumps(data, indent=1))
         print()
 
-    print(f"done. python ingest/recode.py score {a.session}")
+    print(f"done. python3 ingest/recode.py score {a.session}")
 
 
 def cmd_score(a):

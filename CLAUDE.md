@@ -2,9 +2,15 @@
 
 A gated pipeline that maintains knowledge bases in statistics, probability, and computational biology, sources the mathematics underneath them, proposes research at their intersections, and reviews those proposals before they reach the user.
 
-Read `HANDOFF.md` for current state and next actions. `research-network-architecture.md` has the full design and cost model. `WEEK-1-PLAN.md` is the active phase. `HYBRID-SYSTEM-REVIEW.md` is why invariants 13–16 exist and `DISTORTION-REVIEW.md` is why 17–19 do; read the relevant one before touching either group.
+Read `PROJECT-STATUS.md` for current state and next actions. `research-network-architecture.md` has the full design and cost model. `WEEK-1-PLAN.md` is the active phase. `HYBRID-SYSTEM-REVIEW.md` is why invariants 13–16 exist and `DISTORTION-REVIEW.md` is why 17–19 do; read the relevant one before touching either group.
 
-**Currently in Week 1.** Nothing beyond ingest and triage should be running. Do not enable later phases early — each gate goes live only after the user has personally audited its judgment for two weeks.
+Phase — stated as gates passed, not as a week number, because a week number goes stale on a timer.
+
+Ingest + triage: live and measured. recall 0.903 / precision 0.699 — eval/runs/20260827-214656, corrected for the 2509.18530 label flip.
+All four curators: running, ahead of their gate. 28 cards.
+Everything downstream: not enabled. math-scout has never run; bridge-finder has been run once by hand, not wired in. Cron is off, correctly.
+
+Before enabling anything further: card extraction has never been measured — card_eval.py does not exist, so the phasing gate "the schema stops moving" has not been passed. Each gate goes live only after the user has personally audited its judgment for two weeks.
 
 ---
 

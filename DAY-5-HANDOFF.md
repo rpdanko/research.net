@@ -52,7 +52,7 @@ Goal per `WEEK-1-PLAN.md`: 150 papers from a recent arXiv window, stratified int
 `eval_triage.py sample` reads from the arXiv database, and nothing has ever written it. Before anything else:
 
 ```bash
-python ingest/arxiv_pull.py --since 2026-08-09      # ~2 weeks; --since takes a date or "yesterday"
+python3 ingest/arxiv_pull.py --since 2026-08-09      # ~2 weeks; --since takes a date or "yesterday"
 ```
 
 `--since` accepts a literal date. You want a window wide enough to yield several hundred papers across four domains — `sample` fetches `n*4` rows and errors out if the DB holds fewer than `n`. Respect the 3.1s rate limit already coded in; do not parallelise.
@@ -85,8 +85,8 @@ Either way: **the stratum you type during labelling is the one that counts.** `s
 ### 3.3 Labelling
 
 ```bash
-python ingest/eval_triage.py sample --n 150      # or 300, per above
-python ingest/eval_triage.py label
+python3 ingest/eval_triage.py sample --n 150      # or 300, per above
+python3 ingest/eval_triage.py label
 ```
 
 Non-negotiable, and the script says so: **score every paper yourself before running triage on them even once.** Once you have seen a machine score you cannot unsee it and your labels stop being an independent standard. There is no undo for this.
@@ -108,7 +108,7 @@ Options, none free:
 ### 3.5 Optional, once ≥30 are labelled
 
 ```bash
-python ingest/eval_triage.py calibrate    # run from repo root; needs canon_index importable
+python3 ingest/eval_triage.py calibrate    # run from repo root; needs canon_index importable
 ```
 
 Suggests `NEAR`/`FAR` from your labels instead of the shipped 0.62/0.38 guesses. If it reports that the distributions overlap almost completely, **do not wire the band into the threshold** — that is the script telling you similarity is not separating your classes, and the honest response is to fix the canon or the domain map rather than to ship a band that adds noise.
@@ -161,7 +161,7 @@ Fixed in code: `eval_triage.py` now has `_infer_domain(categories)`, which rebui
 **`label`'s stratum prompt says `[in/out/borderline]`, but every other place in the codebase uses `expect_in`/`expect_out`/`borderline`.** All 180 rows were hand-typed against that mismatched prompt, so the stored `stratum` values are currently a mix of `"in"`, `"out"`, `"In"`, `"Borderline"`, a typo (`"borderlinne"`), and one unrecognizable value, `"pit"`, on `2608.07528` ("The Knowing-Saying Gap: When Probes See Errors that Confidence Misses"). This matters beyond cosmetics: `score_run()`'s borderline-agreement check is `st.startswith("border")`, case-sensitive — so the capitalized `"Borderline"` rows are currently invisible to that check. Fixed going forward: `label()` now normalizes what you type (`_normalize_stratum`, case-insensitive, prefix-matched). The 180 existing rows need a one-time cleanup pass:
 
 ```bash
-python ingest/fixup_labels_stratum_domain.py
+python3 ingest/fixup_labels_stratum_domain.py
 ```
 
 Backs up to `eval/labels.jsonl.bak` first, then backfills `domain` from `categories` and normalizes `stratum` in place. It will print exactly one unresolved row — `2608.07528`, currently `stratum: "pit"` — because it won't guess at a typo it can't confidently place. Open `eval/labels.jsonl`, find that line, and set `stratum` to `expect_in`, `expect_out`, or `borderline` based on your own memory of that paper (or re-read the abstract; it's a probing/LLM-interpretability paper, `my_score: 2`) before running `score` later.
@@ -169,9 +169,9 @@ Backs up to `eval/labels.jsonl.bak` first, then backfills `domain` from `categor
 ### 6.4 Resume here
 
 ```bash
-python ingest/fixup_labels_stratum_domain.py     # one-time; see 6.3
+python3 ingest/fixup_labels_stratum_domain.py     # one-time; see 6.3
 # then hand-fix the one flagged row's stratum in eval/labels.jsonl
-python ingest/eval_triage.py calibrate           # re-run now that domain scoping is fixed
+python3 ingest/eval_triage.py calibrate           # re-run now that domain scoping is fixed
 ```
 
 After that, pick back up at §3.3/§3.4 above: keep labelling (`sample --n <k> --append`, then `label`) toward whatever target you land on given the four-domain sizing problem, and remember §4's `run_triage.py` still doesn't exist — that, not the labelled-set size, is the actual blocker before Day 6's scoring can run at all.

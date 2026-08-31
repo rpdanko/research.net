@@ -69,7 +69,7 @@ Ordered by leverage per unit of work. Total marginal cost **~$0.83/month**, almo
 | 4.5 | Decision-shaped digest | `weekly-synthesis` §6A–D |
 | 4.6 | Narrowing instrumentation | `ingest/coalition_audit.py` |
 
-All three input channels are `deny`-listed in `settings.json`. One subtlety worth flagging, because denying the writes was not enough on its own: `Bash(python ingest/*.py:*)` is allowed, so an agent could have appended to the verdict file by running `log_verdict.py` itself and manufactured approval for its own past output. The `log` subcommand is denied specifically; `pending`, `show` and `context` remain open.
+All three input channels are `deny`-listed in `settings.json`. One subtlety worth flagging, because denying the writes was not enough on its own: `Bash(python3 ingest/*.py:*)` is allowed, so an agent could have appended to the verdict file by running `log_verdict.py` itself and manufactured approval for its own past output. The `log` subcommand is denied specifically; `pending`, `show` and `context` remain open.
 
 ### 4.1 `focus.md` — a live-state channel *(highest leverage)*
 

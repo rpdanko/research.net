@@ -227,6 +227,38 @@ and `compbio_methods.md`.
 
 ---
 
+### 1.8 Curator prompts must be told to record the version — NEW, 2026-08-28 **[you]**
+
+**Fixed already:** `pdf_extract.py` resolves the arXiv version before fetching, fetches the
+*versioned* id, keys the cache on it, and returns `source_version` + `source_sha256`, printed
+where the curator cannot miss them. `card_schema.json` accepts both fields.
+`ingest/backfill_source_pins.py` retrofits the existing 28 by matching cached e-print bytes
+against each version's sha256. `card_eval.py` shows the version while labelling and warns when
+a card has none.
+
+**Not fixed, and it is the half that makes the rest work:** the four curator prompts under
+`.claude/agents/` still do not tell the curator to copy those two values onto the card, and
+`.claude/**` is not writable from the assistant side. Until that line is added, `pdf_extract`
+prints the pin and every curator ignores it.
+
+**Why this was worth interrupting Tier 1 for.** `pdf_extract.py` used to fetch
+`e-print/<bare id>`, which arXiv resolves to whatever is latest *at fetch time*, and cache it
+under the bare id — while the module docstring asserted "an arXiv version is immutable, so
+there is no staleness question." True of a version, false of the bare id, and the code relied
+on the false reading. Two extractions months apart could return different papers with no
+record of which one a card was built from.
+
+It cost something immediately: card `2407.01051` was hand-checked against the v1 HTML and
+appeared to claim a numerical-experiments section that does not exist there. It exists in v3.
+**The card was right and the check was wrong** — and nothing on the card could have settled
+which of the two was looking at the paper the curator read. A verification step that reports
+correct extractions as fabrications is worse than no verification step, because it spends the
+scarcest thing in the system on manufacturing false positives.
+
+**Deliberately optional, not required, in the schema.** All 28 existing cards lack these
+fields, and "a card that does not validate does not exist" means requiring them would delete
+the KB. Make them required after a re-curation pass, not before.
+
 ## Tier 3 — small, cheap, easy to lose
 
 - **Routing precedence on multi-cross-listed numerical papers — new, low priority.** Surfaced

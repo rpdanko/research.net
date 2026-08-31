@@ -73,7 +73,7 @@ You want 8–15 incidents per axis. Twelve proposals over two weeks gets you the
 Take your scored proposals from Step 1. Strip your scores. Hand them, plus your new anchors, to a fresh agent, and have it score them cold:
 
 ```bash
-python ingest/retranslate.py --axis novelty --cases calibration/novelty/*.md
+python3 ingest/retranslate.py --axis novelty --cases calibration/novelty/*.md
 ```
 
 Compare against your scores. In classical BARS you keep only the incidents where independent raters agree closely and discard the rest. Apply the same discipline: **anchors that fail to reproduce your judgment are bad anchors, not evidence that the model is bad.** Rewrite or delete them.

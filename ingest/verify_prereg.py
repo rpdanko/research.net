@@ -13,7 +13,7 @@ Two independent checks:
 Check 2 is the important one. mtime can be fudged; a hash recorded before
 the run and compared after cannot be, without deliberate effort.
 
-    python ingest/verify_prereg.py b-2608-014
+    python3 ingest/verify_prereg.py b-2608-014
 
 Exit 0 clean, 1 if the verdict must be discarded.
 """

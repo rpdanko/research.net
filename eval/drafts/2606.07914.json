@@ -1,0 +1,52 @@
+{
+  "arxiv_id": "2606.07914",
+  "drafted_by": "claude, 2026-08-30, REVISED. See 2606.07914-report.md for sources.",
+  "judgments": {
+    "problem": "y",
+    "setting": "y",
+    "method": "y",
+    "contribution": "y",
+    "limitations": "y"
+  },
+  "reasons": {
+    "problem": "[source] intro para.2, near sentence-for-sentence. Report sec'prose fields'.",
+    "setting": "[source] all four claimed absences in the abstract + intro para.2; 'Controlled and flow-cytometry experiments' in abstract.",
+    "method": "[source] four clauses, four quotes: intro para.3 (affine span / discrete intersection, near-verbatim), Remark 5 (no-cancellation named), intro para.5 (PM-MMD + characteristic kernel), Theorem 3 (sup over the simplex = uniform). 'Signed' is right and load-bearing: sec5 says 'The non-negativity constraint r >= 0 is not imposed in general.'",
+    "contribution": "[source] three claims: intro para.4 ('Under additional irreducibility or square-completion conditions, the mixing matrix is also recoverable'); Theorems 3/4/5; sec4.3 'Testability of the Assumptions' for the separation claim, which is a whole section and the card's sharpest sentence.",
+    "limitations": "[source] bullets 2-5 all quotable (Table 1 'Symmetric GMM / violates no-cancellation / fails'; conclusion, twice, near-verbatim; sec4.3). Bullet 1 is [prior] inference from Thm 2's hypothesis, correct and honestly scoped. NOTE bullets 3-4 come from the conclusion and this is the first of three cards where the extractor matched one -- the limitations are visibly better for it."
+  },
+  "objects": {
+    "Finite mixture model": {
+      "verdict": "p",
+      "reason": "[internal] Alias 'mixing matrix' is a CONSTITUENT of a finite mixture model, not a synonym -- and the card's own role text says so ('weight vectors collected in the mixing matrix'). Role describes them as different, alias asserts they are the same. Collapses two concordance nodes. Same class as card 1's Ellipsoid method alias. Checkable with no paper access."
+    },
+    "Marginal independence": {
+      "verdict": "y",
+      "reason": "[source] abstract: 'The main identifying signal is marginal independence'. Role's 'strictly weaker than the full independence usually assumed' matches the Thm 1 -> Thm 2 progression."
+    },
+    "Kernel mean embedding": {
+      "verdict": "y",
+      "reason": "[source] intro: 'The estimator is based on kernel mean embeddings of probability measures [30].' Alias 'RKHS embedding of measures' is a genuine synonym -- this is what a correct alias looks like."
+    },
+    "Maximum Mean Discrepancy": {
+      "verdict": "y",
+      "reason": "[source] sec5: 'Since k is characteristic, d(r) = 0 is equivalent to the product-marginal identity (7).' Minor: no 'MMD' alias, same dropped-abbreviation miss as card 2's ESD."
+    },
+    "Characteristic kernel": {
+      "verdict": "y",
+      "reason": "[source] sec5: 'Since k is characteristic on probability measures, its mean embedding is injective on finite signed measures with common total mass.' Role is that sentence in substance."
+    },
+    "Subset-rank and no-cancellation conditions": {
+      "verdict": "y",
+      "reason": "RETRACTED from n. 'subset-rank' occurs TWICE in the abstract stored in papers.sqlite -- the source the curator read. It is absent from the v1 HTML I checked, which is a version discrepancy, not a curator error. named_in_paper: true is correct. Surviving note: the name bundles two conditions Remark 6 shows are independent, so one node stands for two."
+    },
+    "Uniform concentration of empirical embeddings": {
+      "verdict": "y",
+      "reason": "RETRACTED from p. Both halves of the name are in one intro sentence: 'deviation bounds to control the error of empirical embeddings ... yields uniform convergence of the empirical criterion over the affine search domain.' Content is Theorem 3, whose sup over the simplex is what makes it uniform."
+    }
+  },
+  "objects_missed": 1,
+  "missed_reason": "Irreducibility. Formally defined in sec4.3 ('We say that F is irreducible with respect to H if...'), it is how the mixing matrix gets completed -- half the title -- and it is named in this card's OWN contribution and limitations with no object behind it. Revised down from 2: anchor conditions appear mainly as a contrast class in sec4.3, not as machinery the results run on.",
+  "notes": "PLACEHOLDER -- see 2606.07914-report.md and write your own.",
+  "error_types": ["restrictive-filtering"]
+}

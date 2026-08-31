@@ -168,16 +168,40 @@ Worth a structural response rather than another cleanup pass. The cheapest versi
 document quoting a metric names the run file it came from, so a reader can check whether a
 newer one exists. `EVAL-01-FINDINGS.md` now does this; nothing else does.
 
-### 4.5 The repo's own commands do not run on this machine
+### 4.5 The repo's own commands do not run on this machine — MOSTLY FIXED 2026-08-28
 
-**78 occurrences of bare `python ingest/…` across 16 files**, including six agent prompts
-(`stats-curator`, `prob-curator`, both compbio curators, `math-scout`, `bridge-finder`) and
-all three skills. `settings.json` was fixed in Week 2 — its `Bash` allows use `python3` —
-but the documentation and the prompts were not.
+**Was:** 78 occurrences of bare `python ingest/…` across 16 files, including six agent
+prompts and two skills. `settings.json` was fixed in Week 2 — its `Bash` allows use
+`python3` — but the documentation and the prompts were not. The consequence is not
+cosmetic: a dispatched curator following its own instructions runs a command that fails,
+*and* the `python3` allow-list means the failing form is not even permitted.
 
-The consequence is not cosmetic: a dispatched curator following its own instructions runs a
-command that fails, *and* the `python3` allow-list means the failing form is not even
-permitted. Every agent prompt that tells an agent to run a script is currently wrong.
+**Swept:** `README.md`, `HANDOFF.md`, `DAY-5-HANDOFF.md`, `RUNBOOK-first-measurement.md`,
+`HYBRID-SYSTEM-REVIEW.md`, `rubrics/WRITING-ANCHORS.md`, and all 14 affected `ingest/*.py`
+docstrings — 46 occurrences.
+
+**Not swept, and still broken — `.claude/**` is not writable from the assistant side**
+(32 occurrences). This is the half that matters most, because these are the files agents
+actually execute from:
+
+| File | Occurrences |
+|---|---|
+| `.claude/skills/weekly-synthesis/SKILL.md` | 16 |
+| `.claude/skills/review-loop/SKILL.md` | 5 |
+| `.claude/agents/stats-curator.md` | 2 |
+| `.claude/agents/prob-curator.md` | 2 |
+| `.claude/agents/compbio-methods-curator.md` | 2 |
+| `.claude/agents/compbio-mechanism-curator.md` | 1 |
+| `.claude/agents/math-scout.md` | 1 |
+| `.claude/agents/bridge-finder.md` | 1 |
+| `.claude/agents/project-architect.md` | 1 |
+| `.claude/settings.json` (in `_comment_log_verdict_subcommand` prose only) | 1 |
+
+Same mechanical substitution, `python ingest/` → `python3 ingest/`. The `settings.json` one
+is a comment describing the allow-rule, which itself is already correct.
+
+**Deliberately left alone:** `canon/canon.jsonl` (paper abstracts containing the word),
+`WEEK-2-PLAN.md` and this file (both discuss the `python`/`python3` problem in prose).
 
 ### 4.6 The precision gain is real but its cause is unrecorded
 
@@ -193,24 +217,33 @@ single run's precision should be read to three decimals.
 
 What is missing is the record of what was edited. See §4.3.
 
-### 4.7 Three of four scripts still carry placeholder emails — and the leakiest one has no guard
+### 4.7 Placeholder emails — FIXED 2026-08-28
+
+**Was:** three of four network-facing scripts still carried a placeholder, and the one with
+the most traffic was the only one with no guard.
 
 | Script | Email | Guard |
 |---|---|---|
 | `canon_harvest.py` | set | present |
-| `citation_overlap.py` | `YOUR_EMAIL_HERE` | present — will refuse |
-| `verify_citations.py` | `""` | present — will refuse |
-| `arxiv_pull.py` | `YOUR_EMAIL_HERE` | **absent** |
+| `citation_overlap.py` | ~~`YOUR_EMAIL_HERE`~~ → set | present |
+| `verify_citations.py` | ~~`""`~~ → set | present |
+| `arxiv_pull.py` | ~~`YOUR_EMAIL_HERE`~~ → set | ~~**absent**~~ → **added** |
 
-`arxiv_pull.py` is the highest-volume caller in the system — the 5,275-row harvest ran
-through it — and it is the one script that will happily run anonymously.
+All four now carry `robinpdanko@gmail.com`, and `arxiv_pull.py` has the same
+`YOUR_EMAIL_HERE` guard the other three already had. `pdf_extract.py` imports `UA` from
+`arxiv_pull`, so its own placeholder warning is resolved by the same change.
 
-This is not housekeeping. `README.md` singles out `verify_citations.py` as the one that
-matters most, because *"a 429 mid-scan looks exactly like a fabricated citation, and that is
-the one confusion the citation gate must never make."* Invariant 17 rests on that
-distinction. Two of the three scripts touching OpenAlex will hard-exit the first time they
-are called, which is safe, and the third has been running anonymously against arXiv for
-weeks, which is not.
+**Why this was not housekeeping.** `arxiv_pull.py` is the highest-volume caller in the
+system — the 5,275-row harvest went out through it — and it was the one script that would
+run anonymously without complaint. `README.md` singles out the citation path as the one
+that matters most, because *"a 429 mid-scan looks exactly like a fabricated citation, and
+that is the one confusion the citation gate must never make."* Invariant 17 rests on that
+distinction, and anonymous calls are what make 429s likely.
+
+**Worth noting as a pattern rather than an incident:** the guard existed in three scripts
+and was missing from the fourth. A convention enforced by copy-paste holds until someone
+writes the next file. If a fifth network-facing script appears, the guard is the thing to
+check for.
 
 ### 4.8 `CLAUDE.md` says "Currently in Week 1"
 
@@ -228,11 +261,13 @@ Ordered by what the project's own philosophy says comes first, not by size.
 1. **`git init && git add -A && git commit`** **[shell]**. Thirty seconds. It has already
    cost the project two unrecoverable changes (§4.3). Do this before any further edits, so
    today's work is the first commit rather than part of an untracked pile.
-2. **Sweep `python ` → `python3 `** across the 16 files (§4.5). The six agent prompts matter
-   most — an agent cannot run what it is told to run. Mechanical; no judgment needed.
-3. **Set the email in `arxiv_pull.py`, `citation_overlap.py`, `verify_citations.py`, and add
-   the missing `YOUR_EMAIL_HERE` guard to `arxiv_pull.py`** (§4.7), copying the pattern the
-   other three already use.
+2. ~~Sweep `python ` → `python3 `~~ — **done for 46 of 78 occurrences.** The remaining **32
+   are all under `.claude/**`, which the assistant cannot write to**: two skills, seven agent
+   prompts, one `settings.json` comment. Table in §4.5. These are the ones agents actually
+   execute from, so the sweep is not finished until they are done. Same substitution,
+   `python ingest/` → `python3 ingest/`, no judgment needed.
+3. ~~Set the emails and add the missing guard~~ — **done** (§4.7). All four scripts carry
+   `robinpdanko@gmail.com`; `arxiv_pull.py` now has the guard the other three had.
 4. **Correct `CLAUDE.md`'s phase marker** and point it at this file (§4.8).
 5. **`python3 ingest/canon_tier.py apply`** **[shell]**, then re-render exemplars. Today's
    `compbio_mechanism` worksheet edits — two strike reversals and ten rewritten reasons —
@@ -241,10 +276,28 @@ Ordered by what the project's own philosophy says comes first, not by size.
 
 ### Tier 1 — the thing the phase is actually for
 
-6. **Write `ingest/card_eval.py`**, mirroring `eval_triage.py`'s real shape (`_infer_domain`,
-   `sample`, `label`, `_save`/`_resolve`, a `score_run` equivalent, `diff`, argparse). The
-   assistant can write it without shell access. Carry the sampler lesson across: shuffle the
-   final output before writing, so it does not reproduce the streaking bug.
+6. ~~Write `ingest/card_eval.py`~~ — **written 2026-08-28, not yet run.** Mirrors
+   `eval_triage.py`'s shape: `sample` / `label` / `score` / `diff`, `--append`, `_save`,
+   a `score_run` equivalent writing to `eval/card_runs/`. Design notes worth knowing before
+   you run it:
+
+   - **It reads the card files, not `kb/*/index.jsonl`.** The index is generated and can lag;
+     an eval that silently scores a stale copy of what it is measuring is worse than none.
+   - **`mathematical_objects` is scored per object, both directions** — precision (of what
+     the curator listed, how much is real) and recall (how many load-bearing objects it
+     missed). Without the recall half a curator that lists one safe object per paper scores
+     perfectly.
+   - **`named_in_paper: false` claims are scored separately.** They are the highest-value
+     output in the system and the least checkable — no string in the paper to point at. If
+     unnamed precision comes in materially below named precision, that is the most
+     actionable number the script produces, because a false object there becomes a node
+     `bridge-finder` reasons over.
+   - **Curator `confidence` is not judged but is cross-tabulated** against your agreement.
+     If low-confidence cards are not actually worse, the field is decorative.
+   - **Roles are judged from the snapshot taken at `sample` time**, not the live card, so a
+     mid-labelling re-curation cannot change what the number means.
+   - The final sample is shuffled before writing, so the `eval_triage.py` streaking bug
+     cannot reappear here.
 7. **Run `sample` → `label` → `score` against the 28-card KB** **[shell]**. Score on field
    *equivalence*, not exact string match. Note the inversion: `stats` is your best *charter*
    eval target (40 rows, uncontaminated) and your worst *card* target (3 cards). Pool across

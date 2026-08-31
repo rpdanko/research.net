@@ -42,11 +42,32 @@ the source. arXiv's rate limit is one request per three seconds and 429s have
 been aggressive since early 2026 (see arxiv_pull.py). Without a cache, a curator
 loop over ten papers with two retries each is sixty seconds of sleeping and
 thirty chances to get banned. Sources land in ingest/cache/eprint/ and are
-reused forever -- an arXiv version is immutable, so there is no staleness
+reused forever -- an arXiv VERSION is immutable, so there is no staleness
 question.
+
+THE VERSION IS IMMUTABLE. THE BARE ID IS NOT, AND THAT USED TO BE A BUG HERE.
+    Until 2026-08-28 this script fetched EPRINT + arxiv_id with no version
+    suffix, which arXiv resolves to whatever is latest AT FETCH TIME, and cached
+    it under the bare id. So the paragraph above was asserting a property the
+    code did not secure: two extractions of "2407.01051" months apart could
+    return different papers, the cache would serve whichever arrived first, and
+    nothing recorded which one a card was built from.
+
+    That is not hypothetical. Card 2407.01051 was checked by hand against the v1
+    HTML and appeared to claim a numerical-experiments section that did not
+    exist -- it exists in v3. The card was right and the check was wrong, and
+    there was no way to tell from the card which of them was looking at the
+    paper the curator actually read.
+
+    Now: the version is resolved at extract time, the versioned id is what gets
+    fetched, the cache key carries it, and both the version and a sha256 of the
+    exact bytes are returned so they can be written onto the card. A card that
+    records these can be re-verified against the text it was really made from.
+    Same reasoning as verify_prereg.py's mtime+hash check, for the same reason:
+    a claim you cannot re-check later is a claim you are taking on trust.
 """
 
-import argparse, gzip, io, json, re, sqlite3, sys, tarfile, time
+import argparse, gzip, hashlib, io, json, re, sqlite3, sys, tarfile, time
 import urllib.error, urllib.request
 from pathlib import Path
 
@@ -54,6 +75,7 @@ ROOT = Path(__file__).parent.parent
 DB = ROOT / "ingest" / "papers.sqlite"
 CACHE = ROOT / "ingest" / "cache" / "eprint"
 EPRINT = "http://export.arxiv.org/e-print/"
+ABS_API = "http://export.arxiv.org/api/query?id_list="
 
 DELAY = 3.1                 # matches arxiv_pull.py; do not lower
 MAX_SECTION_CHARS = 8000    # per section, after cleaning
@@ -104,8 +126,45 @@ def _ua():
         return "research-net/0.1"
 
 
+def _resolve_version(arxiv_id):
+    """Bare id -> versioned id ('2407.01051' -> '2407.01051v3'), or None.
+
+    One extra API call per extraction. That is cheap next to what follows it --
+    the e-print fetch plus full-text parsing -- and it is the difference between
+    a card that can be re-verified and one that cannot.
+
+    Returns None rather than raising if arXiv is unreachable or the response is
+    unparseable: an unpinned extraction is worse than a pinned one but far
+    better than no card, and the caller records the null so the gap is visible
+    on the card rather than silently absent.
+    """
+    if re.search(r"v\d+$", arxiv_id):
+        return arxiv_id                      # already pinned by the caller
+    try:
+        req = urllib.request.Request(ABS_API + arxiv_id,
+                                      headers={"User-Agent": _ua()})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            xml = r.read().decode("utf-8", "replace")
+        time.sleep(DELAY)
+    except Exception as e:
+        print(f"warning: could not resolve version for {arxiv_id} ({e}); "
+              f"fetching the bare id, which is whatever arXiv serves today.",
+              file=sys.stderr)
+        return None
+    m = re.search(r"<id>\s*https?://arxiv\.org/abs/([^\s<]+?v\d+)\s*</id>", xml)
+    if not m:
+        print(f"warning: no versioned id in the API response for {arxiv_id}.",
+              file=sys.stderr)
+        return None
+    return m.group(1)
+
+
 def _fetch_source(arxiv_id, refresh=False):
-    """Returns raw bytes of the e-print, cached. None if arXiv has no source."""
+    """Returns raw bytes of the e-print, cached. None if arXiv has no source.
+
+    `arxiv_id` should already carry its version when the caller could resolve
+    one -- the cache key is only immutable if the id is.
+    """
     CACHE.mkdir(parents=True, exist_ok=True)
     blob = CACHE / f"{arxiv_id.replace('/', '_')}.bin"
     if blob.exists() and blob.stat().st_size and not refresh:
@@ -230,6 +289,7 @@ def extract(arxiv_id, wanted, refresh=False):
     out = {"arxiv_id": arxiv_id,
            "title": (meta or {}).get("title"),
            "categories": (meta or {}).get("categories"),
+           "source_version": None, "source_sha256": None,
            "sections": {}, "missing": {}}
 
     if "abstract" in wanted:
@@ -242,11 +302,16 @@ def extract(arxiv_id, wanted, refresh=False):
     if not need_source:
         return out          # abstract only: no network, no cache, done
 
-    data = _fetch_source(arxiv_id, refresh)
+    # Pin the version BEFORE fetching, so the bytes and the cache key both refer
+    # to something immutable. See the version note in this module's docstring.
+    versioned = _resolve_version(arxiv_id)
+    out["source_version"] = versioned
+    data = _fetch_source(versioned or arxiv_id, refresh)
     if data is None:
         for w in need_source:
             out["missing"][w] = "arXiv returned no e-print (withdrawn, or PDF-only)"
         return out
+    out["source_sha256"] = hashlib.sha256(data).hexdigest()
 
     tex, why = _tex_from(data)
     if tex is None:
@@ -289,6 +354,25 @@ def render(res):
         lines.append(f"**{res['title']}**")
     if res.get("categories"):
         lines.append(f"`{res['categories']}`")
+
+    # The pin, stated where the curator cannot miss it. These two values go
+    # straight onto the card as source_version and source_sha256; without them
+    # nobody re-checking the card later can tell which version it was made from,
+    # and a correct card looks like a fabricated one against the wrong version.
+    if res.get("source_version"):
+        lines.append("")
+        lines.append(f"**Source version: `{res['source_version']}`** — copy this "
+                     f"to the card's `source_version`.")
+        if res.get("source_sha256"):
+            lines.append(f"**Source sha256: `{res['source_sha256']}`** — copy this "
+                         f"to `source_sha256`.")
+    elif res.get("sections"):
+        lines.append("")
+        lines.append("**Source version: UNRESOLVED.** arXiv did not return a "
+                     "versioned id, so this text is whatever was latest today "
+                     "and cannot be pinned. Set the card's `source_version` to "
+                     "`unresolved` rather than guessing, and say so in "
+                     "`limitations`.")
     lines.append("")
     for name in ALL_SECTIONS:
         if name in res["sections"]:

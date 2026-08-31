@@ -1,0 +1,427 @@
+# Card-eval handoff — 2026-08-30
+
+State of the `card_eval.py` measurement (PROJECT-STATUS.md Tier 1), written to be
+picked up cold. Read §1 and §6 first; everything else is reference.
+
+---
+
+## 1. Where this stands in one paragraph
+
+`card_eval.py` is written and instrumented. **No cards have been scored yet** —
+`score` has never been run and `eval/card_runs/` is empty. Two cards were judged
+by hand before this session (2407.01051, 2410.16457); four more have **drafted**
+verdicts sitting in `eval/drafts/`, unimported. Fifteen of the twenty-one sampled
+cards have neither. The immediate next action is §6.
+
+The session's real output is not the four drafts. It is a set of findings about
+**why** cards fail, which point at `pdf_extract.py` rather than at curator
+prompts, and four schema questions that must be settled before the numbers mean
+anything.
+
+---
+
+## 2. What changed in the code
+
+### `ingest/card_eval.py`
+
+| Change | Why |
+|---|---|
+| **`_is_judged()` rewritten** | Was `any(judgments)`. A card with one field answered counted as done, so quitting mid-card made `label` skip it on restart and open the next untouched one. Now requires all fields **and** all object verdicts non-null. |
+| **`labeller` + `drafted` fields** on sampled records | Provenance. `score` refuses to present a headline number without saying who produced the labels. |
+| **`_ask(prompt, valid, default=None)`** | Lets enter accept a drafted verdict. |
+| **`label()` shows drafts** | Drafted verdict + its one-line reason at each prompt; enter accepts, a letter overrides; overrides recorded in `r["overrides"]`; stamps `labeller` as `user` or `user-reviewed-draft`. |
+| **New `import` subcommand** (`import_draft()`) | Loads a drafted-verdicts JSON into `drafted`. **Never writes `judgments` or object verdicts.** Validates verdict letters, checks object names against the card's actual list, drops tags outside ERROR-TYPES.md, and skips cards you have already judged unless `--force`. |
+| **`score_run()` provenance block** | Prints the labeller split before any number. Complains loudly if a whole run passed with zero overrides — "either the drafts were right, or they were accepted without resistance… these look identical in this file and are not identical." |
+| **Run file** now carries `labellers`, `n_overridden`, `overrides` | So a stored 0.82 can never again be a number without a source. |
+| **Docstring §"Who is allowed to label"** | Records the compromise honestly: an eval scored by another Claude instance measures agreement, not accuracy, and is weakest exactly on `conceptual-math`. |
+
+### `ingest/show_eprint.py` — **new, and never run**
+
+Decompresses and greps `ingest/cache/eprint/<id>.bin` — the authoritative record
+of what a curator actually read, and previously unreadable by anything in the
+repo. Handles gzipped tar, single gzipped file, and PDF.
+
+Written because raw `grep` on those blobs is worse than useless: searching
+`2506.07459.bin` for `ddG` reports 7 hits, and searching it for `ESMFold` — which
+appears dozens of times in that paper — reports 0. **Every count off the raw blob
+is coincidental byte matching.**
+
+> **Test it before trusting it.** `python3 ingest/show_eprint.py 2506.07459 --list`
+> is the smoke test. If it throws, the traceback is the first thing to fix.
+
+### `eval/card_labels.jsonl`
+
+Record 5 (2601.03123) had its judgments cleared at your request — `problem: y`,
+`setting: p`, `method: y`, `contribution: y`, `limitations: p`, and object
+`Unitary synthesis: y` all reset to `null`. Nothing else in the file was touched
+and no card file was deleted.
+
+---
+
+## 3. Card status
+
+| # | arXiv ID | Domain | State |
+|---|---|---|---|
+| 1 | 2407.01051 | compbio_methods | **judged** (hand, pre-session) |
+| 2 | 2410.16457 | probability | **judged** (hand, pre-session) — see §5.4, one ruling may need revisiting |
+| 3 | 2606.07914 | probability | **drafted**, unimported |
+| 4 | 2506.07459 | compbio_mechanism | **drafted**, unimported |
+| 5 | 2601.03123 | compbio_methods | **drafted**, unimported; marks cleared |
+| 6 | 2608.17381 | compbio_mechanism | **drafted**, unimported |
+| 7–21 | — | — | **not drafted** (15 cards) |
+
+Each drafted card has two files in `eval/drafts/`: `<id>.json` (importable) and
+`<id>-report.md` (the reasoning, with a numbered quote inventory).
+
+---
+
+## 4. How the drafting works, and why it changed mid-session
+
+**The problem it solves.** You said you cannot referee the mathematics on these
+papers unaided and are relying on my judgment. Field-by-field prompting was ~13
+round trips per card — 364 for the KB — and it suppressed the cross-field
+consistency checks that turn out to catch the most defects.
+
+**The problem it creates, which is recorded in the code.** If Claude drafts and
+you accept, `score` measures agreement between two Claude instances, not card
+accuracy. Shared blind spots are invisible, and they are worst on
+`conceptual-math` — which ERROR-TYPES.md calls "where this system's whole premise
+sits." Mitigation is the `verify_citations.py` pattern: **spot-check two or three
+cards a batch against the actual papers.**
+
+**Mid-session correction.** You audited my citations on 2606.07914 and found
+**four** that pointed at sentences not establishing the claim (`setting`/
+finite-sample, `method`/kernel-embeddings, object 4 twice). All four *conclusions*
+survived re-check; none of the *citations* did. Cause: I formed the verdict from
+reading, then reached back for a supporting quote, and a quote fetched to support
+a held conclusion tends to be merely adjacent to it.
+
+**Fix adopted from 2506.07459 onward:** pull quotes into a numbered inventory
+**first**, assign verdicts only from what the quotes say, and mark anything with
+no quote as `[prior]` rather than hunting for a near-miss. Reports 3–6 are built
+this way; report 2606.07914 is not, and its citations should be treated as leads.
+
+---
+
+## 5. Findings — the part worth preserving
+
+### 5.1 `papers.sqlite` abstracts do not match arXiv. Three of four checked.
+
+`arxiv_pull.py` stores abstracts with **no version stamp**, and they differ
+materially from what arXiv now serves.
+
+| Card | Nature of drift |
+|---|---|
+| 2606.07914 | DB says "subset-rank condition" **twice**; v1 HTML says "linear independence of the univariate marginals". |
+| 2506.07459 | DB says "self-derived ddG predictor" + a code-release sentence; v1 says "rapid ddG predictor", no such sentence. |
+| 2601.03123 | DB abstract is **longer** and contains two sentences present in **no version reachable** — and it is *more* detailed than arXiv's current text. |
+| 2608.17381 | **Matches.** Only v1 exists. |
+
+**This is not academic.** I twice scored a card wrong by checking it against a
+version the curator never read — asserting "the curator invented this phrase"
+when the phrase was sitting in `papers.sqlite`. Both retractions are recorded in
+the 2606.07914 report.
+
+**Consequences for `card_eval.py label`:** it prints the pinned e-print version
+above an abstract from `papers.sqlite` that may be a different version, with no
+warning.
+
+**Fixes, in order:**
+1. `arxiv_pull.py` should store the version alongside the abstract. It already
+   parses the API response carrying it and discards it; `_resolve_version()` is
+   already written in `pdf_extract.py`.
+2. `label` should warn when the abstract's version and the card's
+   `source_version` differ, or when the abstract's is unknown.
+3. **Never score `n` on absence without naming the version checked.**
+
+`2601.03123` is unresolved and worth five minutes: check whether a v2 exists. If
+not, the DB abstract came from somewhere other than the version arXiv serves, and
+that bears on all 28 cards.
+
+### 5.2 The missing-object pattern is a design constraint, not a defect
+
+> **Corrected 2026-08-30 after checking the curator prompts.** An earlier version
+> of this section claimed the missing-object and weak-limitations patterns were
+> one finding, fixable in `pdf_extract.py`'s section matching. That was wrong on
+> both counts. What follows is the checked version.
+
+**The curators are explicitly forbidden from reading more.** Every curator's
+frontmatter says "Reads abstract, introduction and conclusion only," and three of
+four spell it out in the procedure:
+
+> `prob-curator.md:16`, `stats-curator.md:16`, `compbio-methods-curator.md:16` —
+> "Run `python ingest/pdf_extract.py <arxiv_id> --sections abstract,intro,conclusion`.
+> **This is the only text you get. Do not request the full PDF.**"
+
+`stats-curator` and `compbio-methods-curator` add the fallback: *"If a card cannot
+be written without the methods section, write the card with `confidence: low` and
+note what was missing — **do not escalate**."*
+
+`HANDOFF.md:195` records it as a designed property — "abstract/intro/conclusion
+only, never full PDFs" — and `pdf_extract.py` quotes the constraint in its own
+docstring.
+
+**So there is no extraction bug here and no prompt bug.** The section list is
+chosen *in the curator prompt*, and `pdf_extract.py` delivers exactly what it is
+asked for. Objects introduced in §3 and §4 are **out of scope by design**.
+
+**Every `objects_missed` count was re-audited against its card's `sections_read`
+on 2026-08-30. Fewer than half survived.**
+
+| Card | `sections_read` | Was | Candidate, and where it actually lives | Now |
+|---|---|---|---|---|
+| 2410.16457 | abstract, intro | 2 | product circular law; eigenvector delocalization — **both in the abstract** | **2 — stands** |
+| 2606.07914 | abs, intro, concl | 1 | irreducibility — **in the abstract *and* intro ¶6** | **1 — stands** |
+| 2608.17381 | abs, intro, concl | 2 | CU-PUCT — §3.2 only, **dropped**. Biophysical feasibility — **title, abstract, contributions ¶3, conclusion** | **1** |
+| 2506.07459 | abstract, intro | 1 | reward hacking — **§2 Related Work only** | **0** |
+| 2601.03123 | abs, intro, concl | 3 | 1-factorization §4.1; trace distance §3.2; Haar §4.2 — **none in window** | **0** |
+| | | **9** | | **4** |
+
+**So the pattern is real but three cards wide, not five.** Where it survives —
+2410.16457, 2606.07914, 2608.17381 — the concept was in the curator's own window,
+often several times over, and still did not become an object. 2608.17381 is the
+sharpest: "biophysics-informed modeling" is **half the paper's title** and appears
+in the abstract, the contributions, and the conclusion, and no object carries it.
+
+Where it does not survive, the curator was reading a smaller paper than I was.
+
+*(2506.07459 deserves a footnote: the **card** does raise reward hacking, in
+`limitations`, despite the term appearing only in §2. Almost certainly its own
+critical inference — which is what that field is for — rather than an extraction.)*
+
+Corroborating from the other direction, and unaffected by this correction:
+2606.07914 is the one card where the extractor **did** match a conclusion, and its
+`limitations` are visibly sharper — two bullets sourced near-verbatim to the
+conclusion instead of inferred. The other two probability cards open `limitations`
+with "Conclusion section was not matched by the extractor" and are correspondingly
+vague.
+
+**These are two separate findings, and only one is a bug.**
+
+1. **Missing objects from §3/§4 — not a defect.** The curator was forbidden to
+   look. Counting these against it scores the curator on information it was
+   instructed not to have. See §7.3, now answered.
+2. **"Conclusion section was not matched by the extractor" — a real bug.**
+   2410.16457 and 2309.12441 both say this. There the curator *asked* for the
+   conclusion and did not get it. That is a genuine `pdf_extract.py` section-matching
+   failure, and it is worth fixing: 2606.07914 is the one card where the conclusion
+   *was* matched, and its `limitations` are visibly sharper — two bullets sourced
+   near-verbatim to the conclusion instead of inferred.
+
+**The open question is a policy one, not a repair.** Is abstract/intro/conclusion
+the right window? It is cheap and it captures the paper's own framing of what
+matters. It also guarantees that machinery defined in the methods section — where
+`mathematical_objects` most densely lives — is invisible. That trade was made
+deliberately and is worth re-examining on evidence, but it is a decision for you,
+not a defect to file.
+
+### 5.3 `aliases` is unvalidated and fails in every direction
+
+Not curator-specific — the same curator both under- and over-populates it.
+
+| Card | Failure |
+|---|---|
+| 2407.01051 | over-populated and corrupted: instances as synonyms; false PL/QG equivalence |
+| 2410.16457 | **zero** aliases on all 7 objects; "ESD" read in the abstract and dropped |
+| 2606.07914 | 3 of 7 populated; `Finite mixture model` → "mixing matrix" (a *part*, contradicting the card's own role text) |
+| 2506.07459 | 3 of 7 defective; `GRPO` → "RAFT", "DPO", which the paper twice calls **different algorithms** |
+| 2608.17381 | `KL divergence` → "trust region" |
+| 2601.03123 | `Unitary synthesis` → "unitary compilation", which §2 **explicitly separates** |
+
+**This hangs entirely on an unsettled question — see §7.1.** If `aliases` means
+"related terms worth matching on" rather than "synonyms", roughly half of these
+dissolve.
+
+### 5.4 `named_in_paper` is unreliable in both directions, and `sections_read` cannot referee it
+
+- **2608.17381 object 2 (UCT):** flagged `false`, and the evidence field says
+  flatly "UCT/UCB is not named". It is named — "UCT-style" in the Figure 1 caption
+  and again in §3, and eq (4) is named **PUCT**. But all three occurrences are
+  outside `sections_read`. **Correct against what was read, false against the
+  paper.**
+- **2608.17381 object 7:** `derivative-free optimization`, flagged `true`; I found
+  no such phrase in pp. 1–11. Appendices unread — **unverified, do not score on
+  absence.**
+- **2506.07459:** the `evidence` field on the PMI object quotes wording that
+  matches **§3.2.2**, attributed to "Intro contribution 2", on a card claiming
+  `sections_read: [abstract, intro]`.
+
+**That last one has a knock-on.** `sections_read` was the decisive test used to
+clear "Hermitization (Girko's method)" on **2410.16457** — a card already judged.
+If `sections_read` under-reports, that ruling needs revisiting.
+
+### 5.4a `compbio-mechanism-curator` is missing the constraint the other three have
+
+Found while checking §5.2, and it is a live lead rather than a tidiness point.
+
+`compbio-mechanism-curator.md:16` reads, in full:
+
+> "Run `python ingest/pdf_extract.py <arxiv_id> --sections abstract,intro,conclusion`."
+
+That is all. **No "This is the only text you get." No "Do not request the full
+PDF." No `confidence: low` fallback.** The other three curators have the
+prohibition; two also have the fallback.
+
+Why it matters: this is the curator whose *entire distinctive job* is
+`named_in_paper: false` recovery — its prompt calls that "the single highest-value
+thing you do, and it is why this curator runs on Sonnet rather than Haiku" — and
+it demands `evidence` for every such claim, since "an unnamed-object claim with no
+textual anchor is a guess, and guesses propagate."
+
+It is also the curator that produced **2506.07459**, the card whose `evidence`
+field quotes wording matching **§3.2.2** while attributing it to "Intro
+contribution 2" and declaring `sections_read: [abstract, intro]`.
+
+That is a specific, checkable hypothesis: **the one curator without the explicit
+prohibition produced the one card whose evidence text appears to come from a
+forbidden section.** It is not proof — the wording may be from a later version's
+intro, and the abstract drift in §5.1 makes that entirely possible. But it is a
+better explanation than anything else on offer, and it is testable with
+`show_eprint.py` against the cached blob.
+
+Either way the prompt should be made consistent with the other three.
+
+### 5.5 Two genuine wins, both `named_in_paper: false`
+
+The highest-value and least checkable output in the system, and it works:
+
+- **2506.07459 — pointwise mutual information.** Confirmed against §3.2.2 eq (4):
+  the inner bracket is $\log p_\theta(y|x) - \log p_\varphi(y)$ over the same
+  sequence, which is PMI by definition. The paper's own gloss — "removes
+  background amino-acid composition… isolating backbone-specific excess
+  compatibility" — describes what PMI measures without naming it.
+- **2608.17381 — query-by-committee.** The term appears nowhere; §3.1 plus eqs (6)
+  and (8) implement the principle exactly.
+
+### 5.6 Rubric gaps — five, and one biases the score
+
+`y` = real and correctly roled · `p` = right object, role is off · `n` = not
+really in this paper. There is no way to say:
+
+1. object right, **alias** wrong (three cards)
+2. object right, **name** malformed — `Hermitization (Girko's method)`,
+   `Subset-rank and no-cancellation conditions`, `Circuit skeleton / ansatz
+   topology` (three cards; a validator could catch `/`, `(`, ` and ` in a name)
+3. object right, **`named_in_paper`** wrong (§5.4)
+4. object right, **too generic** to function as a concordance node
+5. **checked and unresolvable** — `s` means "skipped" and `score_run()` treats it
+   as absent, so an honest "I looked and could not determine" vanishes from the
+   numbers
+
+**(5) is the one that biases**: unresolvable cases get guessed or disappear.
+
+### 5.7 Other
+
+- **Routing:** two quantum-computing papers sit in `kb/compbio_methods/`
+  (2601.03123, 2509.18530). Both cards' `cross_domain_note` flag moderate charter
+  fit, so the curators noticed. Belongs in OPEN-QUESTIONS, not in a card verdict.
+- **`confidence`:** 2608.17381 is the first `high`-confidence card and carries
+  three tagged errors. First real input to `score_run()`'s confidence cross-tab.
+- **Date drift:** 2608.17381 card says `2026-08-21`, arXiv says submitted 18 Aug.
+- **First use of `illusions-of-confidence`** (2608.17381, 2601.03123): a card
+  asserting an absence from sections that could not contain the evidence.
+  ERROR-TYPES.md's third column for it currently reads as prompt-level only; these
+  are two real instances in cards.
+
+---
+
+## 6. Next actions
+
+```
+# 0. smoke-test the new tool (never run)
+python3 ingest/show_eprint.py 2506.07459 --list
+
+# 1. load the four drafts (writes only to `drafted`, never to judgments)
+python3 ingest/card_eval.py import eval/drafts/2606.07914.json
+python3 ingest/card_eval.py import eval/drafts/2506.07459.json
+python3 ingest/card_eval.py import eval/drafts/2601.03123.json
+python3 ingest/card_eval.py import eval/drafts/2608.17381.json
+
+# 2. work through them — read the reason, not just the letter
+python3 ingest/card_eval.py label
+
+# 3. first ever score run
+python3 ingest/card_eval.py score
+```
+
+**The `import` → `label` → `score` path has never been executed end to end.**
+Expect to fix something on the first pass.
+
+With six of twenty-one judged, `score` will be thin — but running it now surfaces
+crashes and shows whether the provenance and error-type blocks read usefully,
+which is worth more at this stage than the numbers.
+
+**Two disagreements to settle while labelling 2601.03123**, where my draft inverts
+the marks that were cleared:
+
+- I score `setting: y`; you had `p`. Every clause resolves to a quote and both
+  topologies are realised in Appendices C.1/C.2. **If your reason survives §3 of
+  that report, it is a finding I missed.**
+- I score `Unitary synthesis: p`; you had `y`. Its alias "unitary compilation" is
+  a distinction §2 draws deliberately.
+
+---
+
+## 7. Open decisions — settle these before the numbers mean anything
+
+### 7.1 Does `aliases` mean synonyms, or related terms worth matching on?
+
+Determines whether roughly **half** the object defects across five cards are
+defects. Under "synonyms", `GRPO → DPO` and `Unitary synthesis → unitary
+compilation` are false identities that merge concordance nodes. Under "related
+terms", both are fine. `card_schema.json` does not say.
+
+### 7.2 `named_in_paper` — **largely answered; a naming fix remains**
+
+The curator can only ever see abstract, intro and conclusion (§5.2), so
+`named_in_paper: false` can only mean **"not named in the sections I was given."**
+It has no other available meaning. **2608.17381's UCT object is therefore correct**
+— "UCT-style" appears only in the Figure 1 caption and §3, which the curator was
+forbidden to read.
+
+An earlier version of this file proposed requiring a full-text search before any
+`named_in_paper: false`. **That is incompatible with the architecture** — it would
+require the curator to read the full PDF. The search belongs to the *checker*, not
+the curator.
+
+What remains: the field is misnamed, and `card_eval.py` currently invites the
+wrong reading. Either rename it `named_in_sections_read`, or document the
+convention in `card_schema.json` — which today defines `sections_read` as bare
+`{"type": "array", "items": {"type": "string"}}` with **no description at all**,
+while `source_version` right below it gets a full paragraph. That silence is why
+`sections_read` cannot referee anything.
+
+### 7.3 `objects_missed` — **answered: it should be curator-relative, and today it is not**
+
+`card_eval.py` asks "How many load-bearing objects did the curator **MISS**?" —
+curator-relative. My original counts were paper-relative, and **the full re-audit
+is the table in §5.2: 9 became 4.** The corrected numbers are already written into
+the four draft JSONs; 2410.16457 is already judged at 2 and needs no change.
+
+The genuine tension worth preserving: **card completeness** (vs. the paper) is what
+determines whether the concordance has enough to work with, and **curator fidelity**
+(vs. its input) is what tells you whether to change a prompt. They are different
+numbers and the eval currently has one. If you want both, the second is
+`objects_missed` as prompted; the first needs a new field and a full-text read.
+
+### 7.4 Should the 2410.16457 "Hermitization" ruling be revisited?
+
+It was cleared on the strength of `sections_read`, which §5.4 shows is not
+reliable. That card is already judged.
+
+### 7.5 Should the rubric gain a letter?
+
+§5.6 (5) — "checked, unresolvable" — is the one that silently biases the score.
+The other four are annoyances.
+
+---
+
+## 8. Things deliberately not done
+
+- **No card files were edited or deleted.** All findings are advisory; the KB is
+  untouched apart from the cleared marks in `eval/card_labels.jsonl`.
+- **No schema changes.** `card_schema.json` is unchanged; §7 must be settled first.
+- **No curator-prompt edits.** They live under `.claude/`, which is not writable
+  from the assistant's session, and §5.2 argues the first fix belongs in
+  `pdf_extract.py` anyway.
+- **`backfill_source_pins.py` still has not been run** (from the prior session).

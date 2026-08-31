@@ -169,7 +169,7 @@ def apply_marks():
     if not total["struck"]:
         print("\nNothing struck. A citation-ranked harvest always contains tool")
         print("papers and reviews; if you struck none, the vetting did not happen.")
-    print("\nNext: python ingest/canon_index.py build")
+    print("\nNext: python3 ingest/canon_index.py build")
 
 
 def main():

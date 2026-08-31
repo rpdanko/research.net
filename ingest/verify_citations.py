@@ -20,10 +20,10 @@ and a reference reads as evidence. A novelty review resting on a fabricated
 "closest prior work" is worse than no novelty review, which is why a
 non-resolving citation invalidates the artifact rather than being logged.
 
-    python ingest/verify_citations.py scan                 # everything, cached
-    python ingest/verify_citations.py gate reviews/b-2608-014/novelty.md
-    python ingest/verify_citations.py sample --n 3         # the part scripts can't do
-    python ingest/verify_citations.py report --month
+    python3 ingest/verify_citations.py scan                 # everything, cached
+    python3 ingest/verify_citations.py gate reviews/b-2608-014/novelty.md
+    python3 ingest/verify_citations.py sample --n 3         # the part scripts can't do
+    python3 ingest/verify_citations.py report --month
 
 WHAT THIS DOES NOT CATCH, and it is half the problem: resolution proves a paper
 EXISTS. It does not prove the paper says what it was cited for. Sun et al.'s
@@ -48,7 +48,7 @@ import urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 
-MAILTO = ""  # <- your email. Required.
+MAILTO = "robinpdanko@gmail.com"  # <- your email. Required.
 
 ROOT = Path(__file__).parent.parent
 CACHE = ROOT / "ingest" / "citation_cache.json"
@@ -411,7 +411,7 @@ def cmd_report(a):
             print("     caught only by you, only three a week, and it is the")
             print("     category the source paper says is most common.")
     else:
-        print("   none run. `python ingest/verify_citations.py sample --n 3`")
+        print("   none run. `python3 ingest/verify_citations.py sample --n 3`")
     return 0
 
 

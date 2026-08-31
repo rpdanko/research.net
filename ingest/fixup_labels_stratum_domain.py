@@ -23,7 +23,7 @@ found two problems with the file as it stood at 180 labelled rows:
    value ("pit") that doesn't map to anything. This normalizes what it can
    and prints what it can't for manual review -- it does not guess at "pit".
 
-Usage:  python ingest/fixup_labels_stratum_domain.py
+Usage:  python3 ingest/fixup_labels_stratum_domain.py
 Writes eval/labels.jsonl in place. eval/labels.jsonl.bak keeps the
 pre-fix copy -- diff against it if anything looks wrong afterward.
 """

@@ -19,7 +19,7 @@ were counted against the stale routing. Before promoting either change,
 those counts need to be re-derived against the routing that will actually
 be live.
 
-Usage:  python ingest/redomain_after_sets_reorder.py
+Usage:  python3 ingest/redomain_after_sets_reorder.py
 Writes eval/labels.jsonl in place. Backs up to
 eval/labels.jsonl.pre-redomain.bak first (kept separate from the earlier
 .bak so both cleanup steps stay individually reversible). Prints every row

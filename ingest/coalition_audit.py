@@ -9,8 +9,8 @@ anything.
 
 Six of them are measurable from files you already have.
 
-    python ingest/coalition_audit.py --month
-    python ingest/coalition_audit.py --month --snapshot   # append to the trend
+    python3 ingest/coalition_audit.py --month
+    python3 ingest/coalition_audit.py --month --snapshot   # append to the trend
 
 1. NARROWING. Messeri & Crockett's monoculture, operationalised. A canon-anchored
    pipeline that feeds its own output back into bridge-finder will converge on a
@@ -342,7 +342,7 @@ def main():
         print("   the only judge that matters, which means the referee gate's")
         print("   agreement rate is unmeasurable and its credibility is frozen at")
         print("   whatever you concluded in Week 9.")
-        print("\n   python ingest/log_verdict.py pending")
+        print("\n   python3 ingest/log_verdict.py pending")
     else:
         unread = sum(1 for v in verdicts if not v.get("read"))
         vc = Counter(v.get("verdict") for v in verdicts)

@@ -50,6 +50,17 @@
     "open_questions":    { "type": "array", "items": { "type": "string" } },
     "cross_domain_note": { "type": "string" },
     "confidence":        { "enum": ["high", "medium", "low"] },
-    "sections_read":     { "type": "array", "items": { "type": "string" } }
+    "sections_read":     { "type": "array", "items": { "type": "string" } },
+
+    "source_version": {
+      "type": "string",
+      "pattern": "^([0-9]{4}\\.[0-9]{4,5}v[0-9]+|unresolved)$",
+      "description": "The arXiv version the card was actually extracted from, e.g. 2407.01051v3, or 'unresolved' if pdf_extract.py could not pin one. NOT required yet, deliberately: all 28 cards predating 2026-08-28 lack it, and 'a card that does not validate does not exist' means requiring it would delete the KB. Make it required after a re-curation pass, not before."
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 of the e-print bytes pdf_extract.py fetched. The version says which paper; this says which bytes, and survives arXiv replacing a version in place."
+    }
   }
 }

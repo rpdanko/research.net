@@ -16,9 +16,9 @@ because wayfinding is not a prerequisite for maintaining GPS. Here it is.
 So: five abstracts a week, raw, no card, no score, no agent between you and the
 text. Two minutes.
 
-    python ingest/raw_sample.py --n 5                  # for the digest
-    python ingest/raw_sample.py --band nearmiss        # live triage audit
-    python ingest/raw_sample.py --band mixed --n 6     # both, unlabelled
+    python3 ingest/raw_sample.py --n 5                  # for the digest
+    python3 ingest/raw_sample.py --band nearmiss        # live triage audit
+    python3 ingest/raw_sample.py --band mixed --n 6     # both, unlabelled
 
 BANDS
 

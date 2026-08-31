@@ -19,7 +19,7 @@ DB = Path(__file__).parent / "papers.sqlite"
 OAI = "http://export.arxiv.org/oai2"
 API = "http://export.arxiv.org/api/query"
 DELAY = 3.1                      # seconds between requests; do not lower
-UA = "research-net/0.1 (mailto:YOUR_EMAIL_HERE)"
+UA = "research-net/0.1 (mailto:robinpdanko@gmail.com)"
 
 # Dict order is routing precedence: eval_triage.py's _infer_domain() (and
 # run_triage.py, which reuses it) walks SETS and assigns a paper to the FIRST
@@ -185,6 +185,18 @@ def main():
     p.add_argument("--categories", default="math.PR,math.OC,math.FA,math.DG,math.NA")
     p.add_argument("--max", type=int, default=8)
     a = p.parse_args()
+
+    # Guard added 2026-08-28. The other three network-facing scripts
+    # (canon_harvest.py, citation_overlap.py, verify_citations.py) have always
+    # refused to run with a placeholder address; this one did not, and it is the
+    # highest-volume caller in the system -- the 5,275-row 2026-08-24 harvest went
+    # out through it anonymously. arXiv and OpenAlex both rate-limit anonymous
+    # callers harder, and per README.md that matters most for the citation gate: a
+    # 429 mid-scan looks exactly like a fabricated citation, which is the one
+    # confusion invariant 17 must never make.
+    if "YOUR_EMAIL_HERE" in UA:
+        sys.exit("Set your email in UA at the top of this file. arXiv rate-limits "
+                 "anonymous callers harder, and this script is the bulk harvester.")
 
     con = db()
     if a.query:

@@ -10,7 +10,7 @@ defend.
 Deliberately not an agent. Asking a model to "weigh the reviews" reintroduces
 exactly the anchoring the split-axis referees exist to prevent.
 
-    python ingest/aggregate_reviews.py b-2608-014
+    python3 ingest/aggregate_reviews.py b-2608-014
 """
 
 import argparse, json, sys, statistics

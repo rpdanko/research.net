@@ -111,18 +111,18 @@ The dominant driver is deep reads per day; everything else is second-order. See 
 
 ```bash
 # weekly
-python ingest/log_verdict.py pending      # what's awaiting your judgment
-python ingest/verify_citations.py sample --n 3   # does the cited paper say what it was cited for?
+python3 ingest/log_verdict.py pending      # what's awaiting your judgment
+python3 ingest/verify_citations.py sample --n 3   # does the cited paper say what it was cited for?
 tail -5 logs/health.jsonl                 # daily ingest health
 
 # monthly
-python ingest/review_audit.py --month     # score shape, veto rate, probes, agreement with you, error types
-python ingest/coalition_audit.py --month --snapshot   # narrowing, coupling, wildcard, flattery, engagement
-python ingest/verify_citations.py report --month
-python ingest/concordance_stats.py        # concordance size; consolidate above 800 lines
+python3 ingest/review_audit.py --month     # score shape, veto rate, probes, agreement with you, error types
+python3 ingest/coalition_audit.py --month --snapshot   # narrowing, coupling, wildcard, flattery, engagement
+python3 ingest/verify_citations.py report --month
+python3 ingest/concordance_stats.py        # concordance size; consolidate above 800 lines
 
 # quarterly — the only check pointed at you rather than the machine
-python ingest/recode.py sources
+python3 ingest/recode.py sources
 ```
 
 Read the **shape** of the score distributions, not the means. Warning signs the review audit prints for you:
@@ -156,13 +156,13 @@ A cron job that starts failing quietly is the most likely way this system dies. 
 A three-tier base of influential papers (2000–present, ~2000/domain from OpenAlex) that grounds the charters in exemplars rather than adjectives — the same principle as the rubric anchors.
 
 ```bash
-python ingest/canon_harvest.py resolve     # discover topic IDs -> canon/domain_map.yaml
-python ingest/canon_harvest.py harvest     # ~6000 works, free, ~30 min
-python ingest/canon_tier.py --stats        # museum check: is the canon year-skewed?
-python ingest/canon_tier.py nominate       # emit vetting worksheets
-python ingest/canon_tier.py apply          # after your 3 hours of vetting
-python ingest/canon_index.py build         # local embeddings, zero API cost
-python ingest/eval_triage.py sample --n 150
+python3 ingest/canon_harvest.py resolve     # discover topic IDs -> canon/domain_map.yaml
+python3 ingest/canon_harvest.py harvest     # ~6000 works, free, ~30 min
+python3 ingest/canon_tier.py --stats        # museum check: is the canon year-skewed?
+python3 ingest/canon_tier.py nominate       # emit vetting worksheets
+python3 ingest/canon_tier.py apply          # after your 3 hours of vetting
+python3 ingest/canon_index.py build         # local embeddings, zero API cost
+python3 ingest/eval_triage.py sample --n 150
 ```
 
 Tier 0 (25/domain, hand-picked) goes in the triage prompt. Tier 1 (150, abstracts vetted) derives the charters. Tier 2 (~2000, title-skimmed) drives similarity and citation overlap. Detail and rationale in `WEEK-1-PLAN.md`.
@@ -174,10 +174,10 @@ Two things there worth knowing before you build on it: **citation overlap is lag
 `validate_card.py` only checks that a card is well-formed — required fields present, `role` not a generic presence statement. It does not check that the extraction is *correct*. `card_eval.py` does, the same way `eval_triage.py` checks triage instead of just trusting it:
 
 ```bash
-python ingest/card_eval.py sample --n 20 --domain stats   # pull cards for hand-checking
-python ingest/card_eval.py label                          # your judgment, per field, before you second-guess it
-python ingest/card_eval.py score                           # curator vs. you
-python ingest/card_eval.py diff                             # did the last schema/prompt edit actually help
+python3 ingest/card_eval.py sample --n 20 --domain stats   # pull cards for hand-checking
+python3 ingest/card_eval.py label                          # your judgment, per field, before you second-guess it
+python3 ingest/card_eval.py score                           # curator vs. you
+python3 ingest/card_eval.py diff                             # did the last schema/prompt edit actually help
 ```
 
 Score on field *equivalence*, not exact string match — a curator writing "optimal transport" for a paper that says "Sinkhorn divergence" is correct, not wrong. This is the same lesson the LLM-NERRE paper's manual-scoring table teaches for materials-science extraction (exact-match badly undercounts correct-but-reworded output); it applies just as much to `mathematical_objects`.

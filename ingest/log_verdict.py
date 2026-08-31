@@ -9,10 +9,10 @@ credibility is frozen at its Week 9 value and decays from there unobserved.
 
 This is the fix, and it costs two minutes per proposal.
 
-    python ingest/log_verdict.py pending          # what is awaiting your verdict
-    python ingest/log_verdict.py log b-2608-014   # blind: scores hidden until after
-    python ingest/log_verdict.py show b-2608-014  # your verdict vs. the gate's
-    python ingest/log_verdict.py context --weeks 12   # block for agent prompts
+    python3 ingest/log_verdict.py pending          # what is awaiting your verdict
+    python3 ingest/log_verdict.py log b-2608-014   # blind: scores hidden until after
+    python3 ingest/log_verdict.py show b-2608-014  # your verdict vs. the gate's
+    python3 ingest/log_verdict.py context --weeks 12   # block for agent prompts
 
 ONE RULE, and it is the same rule as reject-first ordering in the referee
 prompts and item 4 of HANDOFF.md section 4: `log` does not show you the referee
@@ -23,7 +23,7 @@ number that measures nothing while looking exactly like a number that does.
 Non-interactive form is available and deliberately awkward -- it exists for
 scripting, not for speed:
 
-    python ingest/log_verdict.py log b-2608-014 --read y \\
+    python3 ingest/log_verdict.py log b-2608-014 --read y \\
         --verdict discarded --reason "assumes exchangeability across batches"
 """
 
@@ -140,7 +140,7 @@ def cmd_pending(a):
         print(f"      {'+'.join(b.get('domains', []))}")
         spec = PROPOSALS / bid / "spec.md"
         print(f"      spec: {spec.relative_to(ROOT) if spec.exists() else 'MISSING'}")
-    print("\n  python ingest/log_verdict.py log <id>")
+    print("\n  python3 ingest/log_verdict.py log <id>")
     if len(rows) > 6:
         print("\n  ^ More than six unlogged. Either the digest is going unread --")
         print("    which is the deskilling signal, see HYBRID-SYSTEM-REVIEW.md 3.3 --")

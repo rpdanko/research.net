@@ -5,7 +5,7 @@ The review loop is the only cycle in an otherwise acyclic pipeline, and
 cycles are where token budgets die. The cap lives here, in code, because an
 instruction in an agent prompt saying "revise at most twice" is not a cap.
 
-    python ingest/check_round_cap.py b-2608-014
+    python3 ingest/check_round_cap.py b-2608-014
 
 Exit 0 -> may revise (prints the incremented round)
 Exit 3 -> shelve; caller must not dispatch project-architect

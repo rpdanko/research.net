@@ -6,8 +6,8 @@ curators write, every day. Schema drift is silent and cumulative -- by the
 time you notice bridge quality dropping, three months of cards are wrong.
 Fail loudly here instead.
 
-    python ingest/validate_card.py kb/stats/cards/2608.01234.md
-    python ingest/validate_card.py kb/*/cards/*.md --new-only
+    python3 ingest/validate_card.py kb/stats/cards/2608.01234.md
+    python3 ingest/validate_card.py kb/*/cards/*.md --new-only
 
 Exit 0 if all pass, 1 otherwise.
 """
