@@ -123,6 +123,39 @@ VERDICTS = {
     "n": "wrong -- asserts something the paper does not support",
 }
 
+# `u` is deliberately NOT in VERDICTS. It is not a fourth grade for the card; it
+# is a statement about the eval's own reach, and keeping it out of that dict is
+# what stops it being read as one.
+#
+# Every `u` must name a reason, for the same argument `card_notes.kind` makes
+# one layer down: an uncountable "could not tell" is indistinguishable from a
+# hole, and a hole leaves the denominator silently. That is ERROR-TYPES.md's
+# `schema-inadequate` applied to the evaluator instead of the curator.
+#
+# Three of the four reasons name a command that would settle them, which is the
+# point -- it lets `score` print a work queue instead of a shrug. The fourth
+# names the place the eval's reliability actually bottoms out, and per the
+# handoff's sec4 that is exactly the set to spot-check against the papers.
+#
+# Scope, deliberately: `u` applies to OBJECTS only, not to the prose fields.
+# That is where sec5.6(5) documented the bias and where the remedies are
+# object-level greps. Extending it to fields is easy later and is not free now
+# -- this file has never been run end to end.
+UNRESOLVED_REASONS = {
+    "w": ("out-of-window",
+          "turns on text outside sections_read",
+          "python3 ingest/show_eprint.py {id} --grep '<term>'"),
+    "v": ("version",
+          "cannot tell which version the card came from, so absence is not absence",
+          "python3 ingest/backfill_source_pins.py    # then re-check {id}"),
+    "c": ("no-source",
+          "cached e-print missing or unreadable",
+          "python3 ingest/show_eprint.py {id} --list    # confirm, then re-fetch"),
+    "m": ("expertise",
+          "cannot referee this mathematics unaided",
+          "spot-check queue -- math-scout, or a human who knows the area"),
+}
+
 ERROR_TYPES_MD = ROOT / "rubrics" / "ERROR-TYPES.md"
 
 
@@ -439,7 +472,11 @@ def label():
         if "mathematical_objects" in r["fields"] and r["objects"]:
             print("\n### mathematical_objects — per object")
             print("    y = real and correctly roled · p = right object, role is off")
-            print("    n = not really in this paper, or misidentified\n")
+            print("    n = not really in this paper, or misidentified")
+            print("    u = you CHECKED and cannot determine -- asks you why, and the")
+            print("        reason becomes a work queue in `score`. Not a soft 'n', and")
+            print("        not for an object that is right in a way the letters cannot")
+            print("        express: that is a `y` plus a note.\n")
             # Roles come from the snapshot taken at sample() time, not from the
             # card file as it stands now. If the card has been edited since you
             # drew the sample, the thing you are judging is the version you drew
@@ -460,23 +497,40 @@ def label():
                     reason = None
                 if d:
                     print(f"      draft: {d}" + (f" — {reason}" if reason else ""))
-                    v = _ask(f"    verdict [y/p/n/s/q, enter={d}]: ",
-                             set("ypnsq"), default=d)
+                    v = _ask(f"    verdict [y/p/n/u/s/q, enter={d}]: ",
+                             set("ypnusq"), default=d)
                 else:
-                    v = _ask("    verdict [y/p/n/s/q]: ", set("ypnsq"))
+                    v = _ask("    verdict [y/p/n/u/s/q]: ", set("ypnusq"))
                 if v == "q":
                     _save(recs)
                     print("saved.")
                     return
+                if v == "u":
+                    print("      why could you not resolve it?")
+                    for k, (nm, gloss, _) in UNRESOLVED_REASONS.items():
+                        print(f"        {k} = {nm:<14} {gloss}")
+                    rk = _ask("      reason [w/v/c/m]: ", set(UNRESOLVED_REASONS))
+                    o["unresolved_reason"] = UNRESOLVED_REASONS[rk][0]
                 if v != "s":
                     if d and v != d:
                         overrides.append(f"object {o['name']}: draft {d} -> you {v}")
                     o["verdict"] = v
-            verdicts = [o["verdict"] for o in r["objects"] if o["verdict"]]
+            # Only graded verdicts roll up. Without the filter a card whose
+            # objects are all `u` would roll up to "p", inventing a judgment out
+            # of an explicit refusal to make one.
+            verdicts = [o["verdict"] for o in r["objects"]
+                        if o["verdict"] in ("y", "p", "n")]
             if verdicts:
                 r["judgments"]["mathematical_objects"] = (
                     "n" if all(v == "n" for v in verdicts)
                     else "y" if all(v == "y" for v in verdicts) else "p")
+            elif any(o["verdict"] == "u" for o in r["objects"]):
+                # Every object unresolved, so the field has no grade to give.
+                # Leaving it None would make _is_judged() false forever and
+                # `label` would reopen this card on every run -- the same resume
+                # bug this file already fixed once. `u` here is excluded from the
+                # per-field rates downstream, which filter to y/p/n.
+                r["judgments"]["mathematical_objects"] = "u"
 
             print("\n  How many load-bearing objects did the curator MISS?")
             print("  (objects the paper's result actually rests on, absent from the card.")
@@ -626,7 +680,8 @@ def import_draft(path, force=False):
         badtags = [t for t in (d.get("error_types") or []) if t not in vocab]
         if badtags:
             print(f"  {aid}  WARNING  tags outside ERROR-TYPES.md: "
-                  f"{', '.join(badtags)} -- dropped, use 'u' instead of inventing")
+                  f"{', '.join(badtags)} -- dropped, write `unclassified` "
+                  f"instead of inventing a tag")
         d["error_types"] = [t for t in (d.get("error_types") or []) if t in vocab]
 
         r["drafted"] = d
@@ -701,8 +756,14 @@ def score_run(labels_path=None):
     listed = correct = partial = wrong = 0
     named_ok = named_tot = unnamed_ok = unnamed_tot = 0
     missed_total, missed_cards = 0, 0
+    unresolved, unresolved_items = Counter(), []
     for r in judged:
         for o in r["objects"]:
+            if o["verdict"] == "u":
+                why = o.get("unresolved_reason") or "unrecorded"
+                unresolved[why] += 1
+                unresolved_items.append((r["arxiv_id"], o["name"], why))
+                continue
             if o["verdict"] not in ("y", "p", "n"):
                 continue
             listed += 1
@@ -719,13 +780,32 @@ def score_run(labels_path=None):
             missed_total += r["objects_missed"]
             missed_cards += 1
 
+    n_unres = sum(unresolved.values())
+    seen = listed + n_unres
     obj_prec = correct / listed if listed else 0.0
+    # The band. `obj_prec` excludes unresolved objects from the denominator;
+    # `obj_prec_lo` counts every one of them as a failure. The truth is inside
+    # that interval and its WIDTH is the honest headline -- a wide band says the
+    # number is not yet trustworthy, which is exactly what sec5.6(5) said the
+    # old single figure was hiding.
+    obj_prec_lo = correct / seen if seen else 0.0
+    resolution = listed / seen if seen else 1.0
     obj_rec = correct / (correct + missed_total) if (correct + missed_total) else 0.0
 
     print(f"\n  mathematical_objects — the load-bearing field\n")
-    print(f"    objects listed        {listed}")
+    print(f"    objects listed        {listed}" +
+          (f"   (+{n_unres} unresolved)" if n_unres else ""))
     print(f"    correct / partial / wrong   {correct} / {partial} / {wrong}")
-    print(f"    object precision      {obj_prec:.2f}   (of what it listed, how much is real)")
+    if n_unres:
+        print(f"    object precision      {obj_prec_lo:.2f} – {obj_prec:.2f}"
+              f"   (lower bound counts all {n_unres} unresolved as wrong)")
+        print(f"    resolution rate       {resolution:.2f}   "
+              f"(share of objects the eval could actually settle)")
+        if resolution < 0.80:
+            print("      ^ Under 0.80. The band is wide enough that the midpoint is")
+            print("        not a finding. Work the queue below before quoting a number.")
+    else:
+        print(f"    object precision      {obj_prec:.2f}   (of what it listed, how much is real)")
     if missed_cards:
         print(f"    object recall         {obj_rec:.2f}   "
               f"({missed_total} missed across {missed_cards} cards)")
@@ -747,6 +827,41 @@ def score_run(labels_path=None):
         print("\n    no named_in_paper: false claims in this sample.")
         print("    For compbio_mechanism that is itself a finding -- its charter sec4")
         print("    calls unnamed usage 'the main event, not an edge case'.")
+
+    # ---- unresolved objects: the work queue, not a hole
+    #
+    # An unresolved object counts as judged, so `label` will never show it
+    # again. That is correct for resume and would be fatal on its own -- it is
+    # what makes `u` a place things disappear into. This block plus
+    # `label --recheck` is the other half; do not remove one without the other.
+    if n_unres:
+        print(f"\n  unresolved  ({n_unres} of {seen} objects)\n")
+        cmds = {nm: cmd for nm, _, cmd in UNRESOLVED_REASONS.values()}
+        for why, c in unresolved.most_common():
+            print(f"    {why:<16} {c:>3}  {'#' * c}")
+        actionable = [x for x in unresolved_items if x[2] in cmds
+                      and not cmds[x[2]].startswith("spot-check")]
+        if actionable:
+            print(f"\n    {len(actionable)} of {n_unres} name a command that would "
+                  f"settle them:\n")
+            for aid, name, why in actionable:
+                print(f"      {aid}  {name}")
+                print(f"        {cmds[why].format(id=aid)}")
+            print("\n      Then `card_eval.py label --recheck` to re-judge just these.")
+        expert = [x for x in unresolved_items if x[2] == "expertise"]
+        if expert:
+            print(f"\n    {len(expert)} need someone who knows the area:\n")
+            for aid, name, _ in expert:
+                print(f"      {aid}  {name}")
+            print("\n      This is where the eval's reliability actually bottoms out,")
+            print("      and it is the honest version of the sec4 caveat: an eval")
+            print("      scored by another Claude instance measures agreement, not")
+            print("      accuracy, and is weakest exactly here. These are the cards")
+            print("      to spot-check against the papers.")
+        if unresolved.get("unrecorded"):
+            print(f"\n    {unresolved['unrecorded']} carry no reason -- labelled before")
+            print("    reasons were required, or written by hand. They are the only")
+            print("    ones this block cannot route anywhere.")
 
     # ---- does the curator's self-reported confidence predict anything?
     by_conf = defaultdict(lambda: [0, 0])
@@ -786,6 +901,49 @@ def score_run(labels_path=None):
             print( "    direction you cannot see.")
     else:
         print("\n  no error types recorded.")
+
+    # ---- card_notes: the schema-inadequacy channel, and its alarm
+    #
+    # Read fresh from the card files rather than from the label records.
+    # card_notes postdates every record in labels.jsonl and `sample` does not
+    # copy it, so scoring the records would report zero forever. Same argument
+    # as _load_cards' docstring: score the artifact, not a stale copy of it.
+    judged_ids = {r["arxiv_id"] for r in judged}
+    note_kinds, cards_with = Counter(), 0
+    for card in _load_cards():
+        if card.get("arxiv_id") not in judged_ids:
+            continue
+        notes = card.get("card_notes") or []
+        if notes:
+            cards_with += 1
+        for cn in notes:
+            if isinstance(cn, dict) and cn.get("kind"):
+                note_kinds[cn["kind"]] += 1
+
+    print("\n  card_notes  (schema inadequacy -- ERROR-TYPES.md "
+          "`schema-inadequate`)\n")
+    if note_kinds:
+        for k, c in note_kinds.most_common():
+            print(f"    {k:<26} {c:>3}  {'#' * c}")
+        print(f"\n    {cards_with} of {n} judged cards carry at least one.")
+        if note_kinds.get("naming"):
+            print("\n    `naming` is the one that matters. The curator had the text,")
+            print("    was appropriately confident, and still could not name an")
+            print("    object canonically. Those cards validate clean at")
+            print("    confidence: high and nothing downstream can see the problem;")
+            print("    per stats-curator.md:27 the bridge is silently lost. Each one")
+            print("    is a concordance node to check by hand.")
+    else:
+        print("    NONE across all judged cards.")
+        print("    If the curator prompts do not yet mention `card_notes`, that is")
+        print("    expected and this line means nothing yet -- ESCALATION-REVIEW.md")
+        print("    sec 6 item 4 is the prompt half, and it is a .claude/ edit.")
+        print("    Once they do mention it, read a zero the way")
+        print("    review-loop/SKILL.md:107 reads a zero `not-probeable` count: an")
+        print("    escape hatch that is never used is not evidence that nothing")
+        print("    needed it. Either the schema fits every paper it has met, or")
+        print("    curators are papering over the misfits. Those look identical")
+        print("    here and are not identical.")
 
     # ---- the notes, in full
     noted = [r for r in judged if r.get("notes")]
@@ -831,8 +989,17 @@ def score_run(labels_path=None):
         "objects": {"listed": listed, "correct": correct, "partial": partial,
                      "wrong": wrong, "missed": missed_total,
                      "precision": obj_prec, "recall": obj_rec,
+                     # precision is the UPPER bound; a stored number that does
+                     # not travel with precision_lo and resolution_rate is the
+                     # same artifact as a 0.82 with no labeller attached.
+                     "precision_lo": obj_prec_lo,
+                     "resolution_rate": resolution,
+                     "unresolved": n_unres,
                      "named_ok": named_ok, "named_total": named_tot,
                      "unnamed_ok": unnamed_ok, "unnamed_total": unnamed_tot},
+        "unresolved_reasons": dict(unresolved),
+        "unresolved_items": [{"arxiv_id": a, "object": o, "reason": w}
+                              for a, o, w in unresolved_items],
         "error_types": dict(tag_counts),
         "notes": {r["arxiv_id"]: r["notes"] for r in judged if r.get("notes")},
         "arxiv_ids": [r["arxiv_id"] for r in judged],
@@ -884,6 +1051,67 @@ def diff():
         print("    spread means nothing. Re-curate the SAME papers to attribute it.")
 
 
+def recheck():
+    """Re-judge only the objects previously marked `u`.
+
+    Without this, `u` is a hole. An unresolved object has a non-null verdict, so
+    _is_judged() passes and `label` never shows that card again -- correct for
+    resume, fatal on its own, because the reason code becomes a diagnosis with
+    no treatment. This walks exactly those objects, prints the command that was
+    supposed to settle each one, and lets you upgrade the verdict. Leaving one
+    unresolved is a legitimate answer; enter does that.
+    """
+    if not LABELS.exists():
+        sys.exit(f"no {LABELS.relative_to(ROOT)} -- run `card_eval.py sample` first")
+    recs = [json.loads(l) for l in LABELS.read_text().splitlines() if l.strip()]
+    cmds = {nm: cmd for nm, _, cmd in UNRESOLVED_REASONS.values()}
+
+    todo = [(r, o) for r in recs for o in r["objects"] if o["verdict"] == "u"]
+    if not todo:
+        print("nothing unresolved.")
+        return
+
+    print(f"{len(todo)} unresolved object(s).")
+    print("  y/p/n = settle it    enter = still unresolved    q = save and quit\n")
+    changed = 0
+    for r, o in todo:
+        why = o.get("unresolved_reason") or "unrecorded"
+        print("=" * 78)
+        print(f"{r['arxiv_id']}  [{r['domain']}]  sections_read: "
+              f"{', '.join(r.get('sections_read') or []) or 'NONE'}")
+        print(f"  - {o['name']}")
+        print(f"    unresolved: {why}")
+        if why in cmds:
+            print(f"    try: {cmds[why].format(id=r['arxiv_id'])}")
+        v = _ask("    verdict [y/p/n/q, enter=still unresolved]: ",
+                 set("ypnq"), default="")
+        if v == "q":
+            break
+        if v:
+            o["verdict"] = v
+            o.pop("unresolved_reason", None)
+            r.setdefault("overrides", []).append(
+                f"object {o['name']}: unresolved({why}) -> you {v}")
+            changed += 1
+
+    # Settling one object changes its card's mathematical_objects roll-up, which
+    # is computed from graded verdicts only. Recompute rather than leave a grade
+    # that no longer matches the objects under it.
+    for r in recs:
+        if "mathematical_objects" not in r.get("fields", []):
+            continue
+        vs = [o["verdict"] for o in r["objects"] if o["verdict"] in ("y", "p", "n")]
+        if vs:
+            r["judgments"]["mathematical_objects"] = (
+                "n" if all(x == "n" for x in vs)
+                else "y" if all(x == "y" for x in vs) else "p")
+        elif any(o["verdict"] == "u" for o in r["objects"]):
+            r["judgments"]["mathematical_objects"] = "u"
+
+    _save(recs)
+    print(f"\nsaved. {changed} settled, {len(todo) - changed} still unresolved.")
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -896,7 +1124,10 @@ def main():
                          "in the file")
     s.add_argument("--fields", help="comma-separated override of the fields to judge; "
                                      f"default {','.join(DEFAULT_FIELDS)}")
-    sub.add_parser("label")
+    lb = sub.add_parser("label")
+    lb.add_argument("--recheck", action="store_true",
+                     help="re-judge only the objects previously marked `u`, "
+                          "showing the command that would settle each one")
     im = sub.add_parser("import", help="load drafted verdicts as defaults for `label`")
     im.add_argument("path", help="JSON file of drafted judgments")
     im.add_argument("--force", action="store_true",
@@ -909,7 +1140,7 @@ def main():
 
     {"sample": lambda: sample(a.n, a.domain, a.append,
                               a.fields.split(",") if a.fields else None),
-     "label": label,
+     "label": lambda: (recheck() if a.recheck else label()),
      "import": lambda: import_draft(a.path, a.force),
      "score": lambda: score_run(a.labels),
      "diff": diff}[a.cmd]()

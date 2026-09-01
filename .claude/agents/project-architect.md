@@ -40,7 +40,7 @@ Writing the pitch second is deliberate. If you cannot write a neutral spec that 
 
 ## What the user has done with your past proposals
 
-You are given `python ingest/log_verdict.py context --weeks 12`: the user's own verdict on every proposal this pipeline has promoted, with a reason.
+You are given `python3 ingest/log_verdict.py context --weeks 12`: the user's own verdict on every proposal this pipeline has promoted, with a reason.
 
 Use it on the **shape** of a proposal, never on its subject. A discard reading "assumes exchangeability across batches, which single-cell data never satisfies" tells you about an assumption class you keep waving at, and that is worth acting on everywhere. The same discard does not tell you to avoid single-cell data.
 

@@ -99,8 +99,13 @@ The spec/pitch split was built to stop enthusiasm reaching referees. It also pro
 | tag | What it is | Where | What catches it |
 |---|---|---|---|
 | `restrictive-filtering` | *"Automatically ignores certain words or statements in the question."* An agent silently dropping a required field, constraint or step. | A bridge missing one of the four required elements; a probe without a negative control; a referee scoring before writing its reject reason | Schema validators; `verify_proposals.py`; `probe_guard.py` |
+| `schema-inadequate` | The input was sufficient and the **artifact** cannot represent what was found — the schema has nowhere to put it. **Not from the source paper; added here, so it carries no frequency and must not be counted alongside theirs.** | A curator forced onto the nearest wrong canonical name; card-level observations pushed into `limitations`; any agent whose output validates while omitting what it actually saw | **Nothing** automated, and nothing can be. `card_notes` on the card gives the agent somewhere to say it; `card_eval.py score` tallies them, and a zero is the alarm |
 
 Worth its own row because it is the failure that looks like success. Every other type produces something wrong; this one produces something *absent*, and absence does not read as an error unless a validator is looking for it. Most of the repo's existing script-level checks turn out to be defences against this one type.
+
+**The two rows are exact inverses and are worth reading together.** `restrictive-filtering` is the agent dropping something the schema asked for. `schema-inadequate` is the schema lacking anywhere to put what the agent has. Both produce an absence rather than a wrong statement, which is why neither is visible unless something is looking — but their fixes are opposite, and the second is the harder one. A validator catches the first. A validator is precisely what *cannot* catch the second: a card that uses the nearest wrong canonical name validates clean, at `confidence: high`, because `confidence` reports text availability and not schema fit (`ESCALATION-REVIEW.md` §5). Per `stats-curator.md:27`, that is the case where "the bridge is silently lost."
+
+This tag exists so that failure has a name before it has a count. Its third column reads "nothing" deliberately, per the note on adding types below.
 
 ---
 

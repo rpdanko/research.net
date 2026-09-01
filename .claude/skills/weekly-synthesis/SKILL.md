@@ -10,12 +10,12 @@ Runs after seven daily ingests. Sequential.
 ## 0. Preflight
 
 ```bash
-python ingest/rebuild_index.py --verify --merge-user-concordance
-python ingest/concordance_stats.py
-python ingest/log_verdict.py context --weeks 12
+python3 ingest/rebuild_index.py --verify --merge-user-concordance
+python3 ingest/concordance_stats.py
+python3 ingest/log_verdict.py context --weeks 12
 ```
 
-Keep the third command's output in context and pass it to the agents below as text. **Do not redirect it to a file** — shell redirection is outside the `Bash(python ingest/*.py:*)` allow pattern and will simply fail, and the `log` subcommand is denied outright so that no agent can append approval for its own past output (see `settings.json`).
+Keep the third command's output in context and pass it to the agents below as text. **Do not redirect it to a file** — shell redirection is outside the `Bash(python3 ingest/*.py:*)` allow pattern and will simply fail, and the `log` subcommand is denied outright so that no agent can append approval for its own past output (see `settings.json`).
 
 `--merge-user-concordance` writes `kb/concordance.merged.jsonl` — the base concordance with `kb/concordance_user.jsonl` unioned over it, user winning on conflict. Everything downstream reads the merged file; `math-scout` alone still writes the base. Spec in `kb/concordance_user.spec.md`. If the merge step fails, **stop the run** rather than falling back to the base file: a silent fallback means the user's planted objects stop reaching `bridge-finder` and nothing anywhere would say so.
 
@@ -44,8 +44,8 @@ If **every** candidate has a non-null `focus_link`, note it in the digest. The c
 One dispatch per candidate. Expect ~70% to be killed.
 
 ```bash
-python ingest/verify_citations.py scan
-python ingest/check_skeptic_rate.py
+python3 ingest/verify_citations.py scan
+python3 ingest/check_skeptic_rate.py
 ```
 
 **The citation scan is a gate, not a report.** It resolves every arXiv ID and DOI the skeptic and math-scout emitted against the live APIs. A non-resolving identifier **invalidates its artifact**: re-dispatch that agent, do not hand-patch the file. An `already-done` kill resting on a paper that does not exist removes a real bridge permanently and does so persuasively, because the identifier is what made it convincing.
@@ -61,7 +61,7 @@ Dispatch with the surviving bridges, capped at **6**, plus the user-verdict cont
 Verify both files exist for every proposal before continuing:
 
 ```bash
-python ingest/verify_proposals.py
+python3 ingest/verify_proposals.py
 ```
 
 A missing spec means the referees would get nothing; a missing pitch means the architect wrote advocacy into the spec. Both are blocking.
@@ -73,7 +73,7 @@ Invoke the `review-loop` skill. It owns both gates, the aggregation, and the rou
 When it returns, before the digest:
 
 ```bash
-python ingest/verify_citations.py scan
+python3 ingest/verify_citations.py scan
 ```
 
 Run again here because `referee-novelty` is the heaviest citer in the system and the one under most pressure to name a prior work — its output *is* a kill decision, and "I found nothing" feels to a model like a failure to do the job. A fabricated reference in a novelty review is the single most expensive error this pipeline can make: it is unrecoverable, it looks rigorous, and nothing downstream re-checks it.
@@ -103,7 +103,7 @@ Everything killed this week: skeptic kills, referee kills, probe falsifications.
 ### C — Raw abstracts *(no agent)*
 
 ```bash
-python ingest/raw_sample.py --n 5
+python3 ingest/raw_sample.py --n 5
 ```
 
 Paste the output verbatim. **Do not summarise, rank, or comment on it** — an agent between the user and the text is precisely what this section exists to remove.
@@ -117,21 +117,21 @@ Skeptic pass rate, referee score distribution, probe verdict distribution, `not-
 Plus, when they apply:
 
 ```bash
-python ingest/log_verdict.py pending     # every week
+python3 ingest/log_verdict.py pending     # every week
 ```
 
 Monthly, on the first run of the month:
 
 ```bash
-python ingest/review_audit.py --month              # agreement with you, error-type counts
-python ingest/coalition_audit.py --month --snapshot
-python ingest/verify_citations.py report --month
+python3 ingest/review_audit.py --month              # agreement with you, error-type counts
+python3 ingest/coalition_audit.py --month --snapshot
+python3 ingest/verify_citations.py report --month
 ```
 
 Quarterly, and this one is yours rather than the pipeline's:
 
 ```bash
-python ingest/recode.py sources
+python3 ingest/recode.py sources
 ```
 
 The health block is the part to actually read every week. The proposals are the output; the health block is what tells you whether to believe them — and §C is what keeps you able to judge whether the health block is telling the truth.
@@ -141,8 +141,8 @@ The health block is the part to actually read every week. The proposals are the 
 Not part of the cron run. This is the user's half and nothing in the pipeline can do it.
 
 ```bash
-python ingest/log_verdict.py log <bridge-id>
-python ingest/verify_citations.py sample --n 3
+python3 ingest/log_verdict.py log <bridge-id>
+python3 ingest/verify_citations.py sample --n 3
 ```
 
 One line per promoted proposal: read or not, pursued / filed / discarded, and one sentence of reason. It feeds `bridge-finder` and `project-architect` next week, and it is the only input to the gate-agreement number in `review_audit.py` §4.

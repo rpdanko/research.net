@@ -404,15 +404,59 @@ determines whether the concordance has enough to work with, and **curator fideli
 numbers and the eval currently has one. If you want both, the second is
 `objects_missed` as prompted; the first needs a new field and a full-text read.
 
-### 7.4 Should the 2410.16457 "Hermitization" ruling be revisited?
+### 7.4 Should the 2410.16457 "Hermitization" ruling be revisited? — **CLOSED 2026-09-01, false lead**
 
-It was cleared on the strength of `sections_read`, which §5.4 shows is not
-reliable. That card is already judged.
+**No, and the premise does not hold on this card.** `sections_read: [abstract,
+intro]` is independently corroborated by `limitations[0]` — *"Conclusion section
+was not matched by the extractor"* — so the card reports the same gap twice and
+shows no sign of under-reporting. The verdict is right on the merits anyway:
+Girko Hermitization is *the* standard route to a circular law, and a paper doing
+exactly that names it in the introduction. The `y` stands.
 
-### 7.5 Should the rubric gain a letter?
+**But the object is defective in a way the rubric cannot see, and that is the
+finding.** Its name is `Hermitization (Girko's method)` and the card carries
+**zero aliases on all seven objects**. Under §7.1, "Girko's method" is a synonym
+and belongs in `aliases`; welded into `name` it yields a concordance key that
+matches nothing, so a card elsewhere saying `Girko Hermitization` never merges
+with it. By the §7.1 asymmetry, a missed merge reaches no gate at all. The most
+important object on this card is currently unusable as a concordance node and it
+scored `y`, because `y` means "real and correctly roled" — which it is.
 
-§5.6 (5) — "checked, unresolvable" — is the one that silently biases the score.
-The other four are annoyances.
+So the evidence here is for §5.6 items 1 and 2, not for re-judging on
+`sections_read`. **Item 2 is machine-checkable**: a validator rejecting `(`, `/`
+and ` and ` in a `name` catches this at write time, along with `Subset-rank and
+no-cancellation conditions` and `Circuit skeleton / ansatz topology`. That is
+five lines in `validate_card.py` and is cheaper than a rubric letter.
+
+*(Also found in that record: the stored abstract cites arXiv 2508.18143 and
+2511.01744, both of which postdate the card's `date: 2024-10-01` by more than a
+year. It cannot be v1, and the card has no `source_version` — a confirmed
+instance of §5.1 sitting on an already-judged card.)*
+
+### 7.5 Should the rubric gain a letter? — **ANSWERED 2026-09-01: yes, `u`, and it is built**
+
+§5.6 (5) — "checked, unresolvable" — was the one that silently biased the score.
+Implemented in `card_eval.py`, objects only:
+
+- **`u` requires a reason** — `out-of-window`, `version`, `no-source`,
+  `expertise`. A bare `u` is uncountable in exactly the way `limitations` was
+  before `card_notes`; the reason is what makes it routable.
+- **Three of the four name a command that would settle them**, so `score` prints
+  a work queue rather than a shrug. The fourth, `expertise`, marks where the
+  eval's reliability actually bottoms out and feeds the §4 spot-check list.
+- **`label --recheck`** walks only the unresolved objects. This is not optional:
+  a `u` has a non-null verdict, so `_is_judged()` passes and plain `label` would
+  never show it again. Without the recheck path `u` *is* the hole it was meant
+  to fix.
+- **Precision is now a band** — upper bound excluding `u`, lower bound counting
+  every `u` as wrong — plus a **resolution rate**. The band's width is the
+  headline; a wide one says the midpoint is not a finding. All three travel into
+  the run file, for the same reason `labellers` does.
+
+**Deliberately not done:** `u` does not extend to the prose fields, and §5.6
+items 1–4 are *not* `u` reasons. An object that is right in a way the letters
+cannot express is a `y` plus a note — scoring it `u` would hide a correct object
+and lose the finding, which is precisely what §7.4 above turns on.
 
 ---
 

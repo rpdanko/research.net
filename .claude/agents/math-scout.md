@@ -44,7 +44,7 @@ Signals that it lags:
 
 ### 4. Pull
 
-For clusters where the theory is ahead, search arXiv `math.*` for the papers that establish the frontier. Use `python ingest/arxiv_pull.py --query "<query>" --categories math.PR,math.OC,math.FA,math.DG,math.NA,math.CT,math.AT --max 8`.
+For clusters where the theory is ahead, search arXiv `math.*` for the papers that establish the frontier. Use `python3 ingest/arxiv_pull.py --query "<query>" --categories math.PR,math.OC,math.FA,math.DG,math.NA,math.CT,math.AT --max 8`.
 
 Write cards for what you pull into `kb/math/cards/`, same schema as the other curators. Cards from abstracts only — you are mapping the terrain, not reading the proofs.
 

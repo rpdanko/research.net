@@ -36,6 +36,13 @@ python3 ingest/apply_triage.py apply
 
 For each domain, take admitted papers, **capped at 10 per domain per day**. If more than 10 pass, take the highest-scoring 10 and leave the rest at `status='admitted'` — they will be picked up tomorrow. Do not raise the cap to clear a backlog; a backlog that never clears means the charter is too broad and should be tightened instead.
 
+**Exception — `compbio_methods`.** A standing backlog in this domain is the
+deliberate and permanent result of the ranked-queue decision
+(`charters/compbio_methods.md` §6 and §8; `OPEN-QUESTIONS.md` §1.1). `SETS` in
+`arxiv_pull.py` is intentionally not narrowed, so more admissions than the cap
+is the expected steady state here, not a signal to tighten the charter.
+
+
 **Exception: `compbio_methods`.** The firehose decision (`OPEN-QUESTIONS.md` §1.1, `compbio_methods.md` §8 — resolved 2026-08-28, option 3) keeps `SETS` broad on purpose: narrowing categories would discard 85%+ of real admissions against the labelled-set analysis, spending recall the invariants price at 3:1 over precision. For this domain only, a standing backlog is the expected, permanent state — not evidence the charter is too broad. The cap is deliberately reinterpreted as a ranked cutoff ("top 10 by score today") rather than a throughput control. Do not narrow `SETS` to clear it.
 
 Dispatch the matching curator subagent (`stats-curator`, `prob-curator`, `compbio-methods-curator`, `compbio-mechanism-curator`) with the list of IDs. One subagent invocation per domain, not per paper.

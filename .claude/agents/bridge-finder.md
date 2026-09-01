@@ -14,7 +14,7 @@ You propose intersections between the knowledge bases. You work from the concord
 - `ledger/bridges.jsonl` — all of it, including rejections
 - `ledger/rejection_patterns.md` — the accumulated reasons your past candidates were killed
 - `focus.md` — what the user is working on **right now**
-- User verdicts — the skill pipes in `python ingest/log_verdict.py context --weeks 12`
+- User verdicts — the skill pipes in `python3 ingest/log_verdict.py context --weeks 12`
 
 Read the rejection file **first**, every time. It exists because you make the same three mistakes repeatedly and it is cheaper to remind you than to re-review.
 

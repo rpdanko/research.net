@@ -30,7 +30,7 @@ Referees receive `proposals/<id>/spec.md` only. **Never the pitch.** Never a not
 ### Aggregation — by script, never by an agent
 
 ```bash
-python ingest/aggregate_reviews.py <id>
+python3 ingest/aggregate_reviews.py <id>
 ```
 
 Rules, applied mechanically:
@@ -48,7 +48,7 @@ Dispatch `numerical-probe` for each proposal that cleared Gate 1. One invocation
 Enforce before dispatch:
 
 ```bash
-python ingest/probe_guard.py <id>    # checks spec has a concrete falsification field
+python3 ingest/probe_guard.py <id>    # checks spec has a concrete falsification field
 ```
 
 A proposal whose `falsification` is vague cannot be probed meaningfully. Send it back as `revise` with that as the objection rather than letting the probe invent a test.
@@ -56,7 +56,7 @@ A proposal whose `falsification` is vague cannot be probed meaningfully. Send it
 After each probe:
 
 ```bash
-python ingest/verify_prereg.py <id>   # confirms preregistration.md predates probe.py by mtime and hash
+python3 ingest/verify_prereg.py <id>   # confirms preregistration.md predates probe.py by mtime and hash
 ```
 
 If the pre-registration was written or modified after the script, **discard the verdict** and mark `inconclusive`. This check is the whole reason the pre-registration is worth anything.
@@ -77,7 +77,7 @@ Verdict handling:
 For anything marked `revise`:
 
 ```bash
-python ingest/check_round_cap.py <id>
+python3 ingest/check_round_cap.py <id>
 ```
 
 - `round >= 2` → **shelve**. No exceptions, no appeals, no "this one is close."
@@ -101,7 +101,7 @@ Every transition is written by a script, not by an agent. Agents produce verdict
 
 ## Monthly audit
 
-Run `python ingest/review_audit.py --month`. Three numbers to look at:
+Run `python3 ingest/review_audit.py --month`. Three numbers to look at:
 
 1. **Referee score distribution.** Mean novelty above ~3 means inflation. Fix the anchors, not the prompt.
 2. **`not-probeable` count.** Zero over a month means the escape hatch is unused and probes are being manufactured.

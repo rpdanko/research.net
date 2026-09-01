@@ -180,9 +180,13 @@ cosmetic: a dispatched curator following its own instructions runs a command tha
 `HYBRID-SYSTEM-REVIEW.md`, `rubrics/WRITING-ANCHORS.md`, and all 14 affected `ingest/*.py`
 docstrings — 46 occurrences.
 
-**Not swept, and still broken — `.claude/**` is not writable from the assistant side**
-(32 occurrences). This is the half that matters most, because these are the files agents
-actually execute from:
+**Swept by hand 2026-09-01 (32 occurrences).** This was the half that mattered most, because
+these are the files agents actually execute from — until the fix, a dispatched curator
+following its own instructions ran a command that both failed *and* was denied by
+`settings.json:19`, which allows only `Bash(python3 ingest/*.py:*)`. Applied by hand because
+`.claude/**` is not writable from the assistant side, and verified afterwards with
+`grep -rc 'python ingest/' .claude/`, which now returns nothing. The table is kept as the
+record of what changed:
 
 | File | Occurrences |
 |---|---|
@@ -261,11 +265,10 @@ Ordered by what the project's own philosophy says comes first, not by size.
 1. **`git init && git add -A && git commit`** **[shell]**. Thirty seconds. It has already
    cost the project two unrecoverable changes (§4.3). Do this before any further edits, so
    today's work is the first commit rather than part of an untracked pile.
-2. ~~Sweep `python ` → `python3 `~~ — **done for 46 of 78 occurrences.** The remaining **32
-   are all under `.claude/**`, which the assistant cannot write to**: two skills, seven agent
-   prompts, one `settings.json` comment. Table in §4.5. These are the ones agents actually
-   execute from, so the sweep is not finished until they are done. Same substitution,
-   `python ingest/` → `python3 ingest/`, no judgment needed.
+2. ~~Sweep `python ` → `python3 `~~ — **done, all 78 occurrences.** The last 32 under
+   `.claude/**` — two skills, seven agent prompts, one `settings.json` comment — were applied
+   by hand on 2026-09-01 and verified with `grep -rc 'python ingest/' .claude/`, which now
+   returns nothing. Table in §4.5.
 3. ~~Set the emails and add the missing guard~~ — **done** (§4.7). All four scripts carry
    `robinpdanko@gmail.com`; `arxiv_pull.py` now has the guard the other three had.
 4. **Correct `CLAUDE.md`'s phase marker** and point it at this file (§4.8).

@@ -30,7 +30,8 @@
         "additionalProperties": false,
         "properties": {
           "name":    { "type": "string", "minLength": 3, "description": "Canonical theory-level name" },
-          "aliases": { "type": "array", "items": { "type": "string" } },
+          "aliases": { "type": "array", "items": { "type": "string" },
+                       "description": "SYNONYMS ONLY -- other names for this same object. `aliases` is not a tag field, it is a merge instruction: math-scout collapses concordance entries that share one (charters/math.md sec 2), so a non-synonym here fuses two distinct objects and every bridge built on the merged node inherits the error. Not for siblings (GRPO / DPO), parts (finite mixture model / mixing matrix), uses (KL divergence / trust region), or broader families (belief propagation / factor graph inference) -- those relations belong in `role`, and if the paper's object really is the broader one, the broader name belongs in `name`. Within that rule be generous: list every genuine variant the literature uses. The two failures are not symmetric -- a false merge produces a bridge that reaches the skeptic, while a missed synonym produces no bridge and reaches no check at all." },
           "role":    { "type": "string", "minLength": 10,
                        "description": "What work the object does here. 'used in the paper' is not a role." },
           "named_in_paper": { "type": "boolean", "default": true },
@@ -51,6 +52,23 @@
     "cross_domain_note": { "type": "string" },
     "confidence":        { "enum": ["high", "medium", "low"] },
     "sections_read":     { "type": "array", "items": { "type": "string" } },
+
+    "card_notes": {
+      "type": "array",
+      "description": "Observations about THIS RECORD, not about the paper. `limitations` is for limits of the work; a limit of the card belongs here. Optional for the same reason as `source_version` below -- every existing card lacks it, and 'a card that does not validate does not exist' means requiring it would delete the KB. Structured rather than free text because the failure being fixed is that these observations were landing in `limitations`, where they are read downstream by referees and bridge-finder as evidence about the paper, and where they cannot be counted (ESCALATION-REVIEW.md sec 5 documents the leak on kb/stats/cards/2512.16061.md, two of six entries). Using it is not an escalation and does not lower `confidence`. Zero of these across a batch is itself the finding, the same alarm as a zero `not-probeable` count in review-loop/SKILL.md:107 -- an escape hatch nobody uses is not evidence that nobody needed it. `card_eval.py score` prints the tally.",
+      "items": {
+        "type": "object",
+        "required": ["kind", "note"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": ["naming", "no-field", "extraction"],
+            "description": "`naming` -- no canonical name was available and the nearest one was used. This is the one that matters: with complete text and appropriate confidence, such a card validates clean at `confidence: high`, and per stats-curator.md:27 'if you invent a new name for a known object, the bridge is silently lost'. Nothing else in the system can see it. `no-field` -- the paper does something the schema has nowhere to record. `extraction` -- text that was needed was not in the sections read; duplicates `confidence` and `sections_read` deliberately, so that such notes stop being written into `limitations`."
+          },
+          "note": { "type": "string", "minLength": 10 }
+        }
+      }
+    },
 
     "source_version": {
       "type": "string",

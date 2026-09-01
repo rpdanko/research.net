@@ -227,7 +227,7 @@ and `compbio_methods.md`.
 
 ---
 
-### 1.8 Curator prompts must be told to record the version — NEW, 2026-08-28 **[you]**
+### 1.8 Curator prompts must be told to record the version — RESOLVED 2026-09-01
 
 **Fixed already:** `pdf_extract.py` resolves the arXiv version before fetching, fetches the
 *versioned* id, keys the cache on it, and returns `source_version` + `source_sha256`, printed
@@ -236,10 +236,20 @@ where the curator cannot miss them. `card_schema.json` accepts both fields.
 against each version's sha256. `card_eval.py` shows the version while labelling and warns when
 a card has none.
 
-**Not fixed, and it is the half that makes the rest work:** the four curator prompts under
-`.claude/agents/` still do not tell the curator to copy those two values onto the card, and
-`.claude/**` is not writable from the assistant side. Until that line is added, `pdf_extract`
-prints the pin and every curator ignores it.
+**Now fixed, 2026-09-01 — this was the half that makes the rest work.** All four curator
+prompts under `.claude/agents/` carry a step 2 telling the curator to copy `source_version`
+and `source_sha256` onto the card verbatim, with `source_version: unresolved` and an omitted
+`source_sha256` as the fallback when the extractor cannot pin a version. Applied by hand,
+since `.claude/**` is not writable from the assistant side.
+
+One cosmetic defect outstanding: `compbio-methods-curator.md:17` is missing the space after
+`2.`, so that step is absorbed into step 1 by markdown lazy continuation instead of standing
+as its own item. Tracked in `dev-notes/curator-prompt-edits-pending.md` §2.
+
+**What this does not do** is retrofit the 28 existing cards. That is
+`ingest/backfill_source_pins.py`, which still has not been run — so from here new cards carry
+a pin and old ones do not, and `card_eval.py`'s "card has no version" warning stays live for
+the backlog until it is.
 
 **Why this was worth interrupting Tier 1 for.** `pdf_extract.py` used to fetch
 `e-print/<bare id>`, which arXiv resolves to whatever is latest *at fetch time*, and cache it
