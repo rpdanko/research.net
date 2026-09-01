@@ -345,9 +345,17 @@ def _is_judged(r):
     restart and open the next untouched one instead. Fixed 2026-08-30 after
     exactly that happened on 2410.16457.
     """
+    Second fix, 2026-09-01: objects are only required when
+    `mathematical_objects` is actually one of the fields being judged. sample()
+    populates r["objects"] from the card regardless, so under a `--fields`
+    override that omits the field, label() skips the object loop, every verdict
+    stays None, and the card reopens on every run forever -- the same resume bug
+    in a different disguise.
+    """
     fields_done = all(v is not None for v in r["judgments"].values())
-    objects_done = (all(o["verdict"] is not None for o in r["objects"])
-                     if r["objects"] else True)
+    objects_done = True
+    if "mathematical_objects" in r.get("fields", []) and r["objects"]:
+        objects_done = all(o["verdict"] is not None for o in r["objects"])
     return fields_done and objects_done
 
 
@@ -566,8 +574,11 @@ def label():
                 r["notes"] = note
 
         if tags:
-            print("  error types (comma-separated numbers, 'u' unclassified, "
-                  "enter for none):")
+            # NB: this prompt's `u` means `unclassified` and is unrelated to the
+            # object-verdict `u`, which means unresolved. Spelled out here
+            # because the two prompts are a dozen lines apart in one session.
+            print("  error types (comma-separated numbers, `unclassified` for "
+                  "none that fit, enter for none):")
             print("    " + "  ".join(f"{i+1}={t}" for i, t in enumerate(tags)))
             raw = input("  tags: ").strip().lower()
             if raw:
@@ -582,7 +593,8 @@ def label():
                         chosen.append(part)
                     elif part:
                         print(f"    ignored unknown tag {part!r} -- do not invent "
-                              f"tags; use 'u' and the vocabulary grows later.")
+                              f"tags; write `unclassified` and the vocabulary "
+                              f"grows later.")
                 r["error_types"] = sorted(set(chosen))
 
         # Provenance. A card you sat through is yours even where you accepted
@@ -1032,9 +1044,22 @@ def diff():
             print(f"  {f:<24} {fa[f]:.2f} -> {fb[f]:.2f}  ({fb[f]-fa[f]:+.2f})")
 
     oa, ob = a.get("objects", {}), b.get("objects", {})
-    for k in ("precision", "recall"):
+    for k in ("precision", "precision_lo", "recall", "resolution_rate"):
         if k in oa and k in ob:
             print(f"  objects {k:<16} {oa[k]:.2f} -> {ob[k]:.2f}  ({ob[k]-oa[k]:+.2f})")
+
+    # `precision` is the upper bound, computed with unresolved objects out of the
+    # denominator. Two runs with different resolution rates are not comparable on
+    # it: the delta can be entirely an artifact of how much each run could settle,
+    # with no change in card quality at all. Say so rather than let the number be
+    # read straight.
+    ra, rb = oa.get("resolution_rate"), ob.get("resolution_rate")
+    if ra is not None and rb is not None and abs(rb - ra) >= 0.05:
+        print(f"\n  ^ Resolution moved {ra:.2f} -> {rb:.2f}. The `precision` line")
+        print("    above is an upper bound over a denominator that changed size,")
+        print("    so part of that delta is a change in what could be settled")
+        print("    rather than in the cards. Read `precision_lo` alongside it, or")
+        print("    work the unresolved queue and re-score before attributing.")
 
     ta, tb = a.get("error_types", {}), b.get("error_types", {})
     if ta or tb:

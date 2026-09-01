@@ -89,7 +89,14 @@ def main():
     ap.add_argument("--file", help="dump only this member")
     ap.add_argument("--grep", help="regex; prints matching lines with context")
     ap.add_argument("-C", "--context", type=int, default=3)
-    ap.add_argument("-i", "--ignore-case", action="store_true", default=True)
+    # Case-insensitive by DEFAULT, because the usual question is "does this
+    # paper say X at all". `-s` is the escape hatch: `ddG` and `DDG` are
+    # different claims about a paper's notation, and a search that cannot tell
+    # them apart cannot settle that kind of question. (The old form was
+    # `-i ... action="store_true", default=True`, which could never be turned
+    # off -- the flag was inert.)
+    ap.add_argument("-s", "--case-sensitive", action="store_true",
+                    help="match case exactly; default is case-insensitive")
     a = ap.parse_args()
 
     members = _load(a.arxiv_id)
@@ -112,7 +119,7 @@ def main():
             print(text)
         return
 
-    flags = re.I if a.ignore_case else 0
+    flags = 0 if a.case_sensitive else re.I
     rx = re.compile(a.grep, flags)
     hits = 0
     for name, text in picked:
