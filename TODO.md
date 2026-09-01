@@ -1,25 +1,194 @@
 # TODO
 
-Read by `pmd` once a day, which surfaces the single item under `## Next step` on
-the dashboard. Everything under `## Backlog` is counted but not surfaced —
-promote an item up when it becomes the next thing.
+Read by `pmd` once a day, which surfaces the item under `## Next step` and hides
+its subtasks and context behind a click. Keep exactly one unchecked top-level box
+there: a short imperative title, the procedure in indented subtasks, the
+reasoning in indented prose beneath. Backlog items are counted but never
+surfaced — promote one up when it becomes the next thing.
 
-Keep exactly one unchecked box under `## Next step`. The reasoning behind any
-item here lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
-`CARD-EVAL-HANDOFF.md`; this file is the index, not the argument.
+**Two task types.** *Evaluation* (`E`) asks whether the system's judgment is
+right. *Development* (`D`) builds or fixes the machinery. They are separated
+because this project has already let the second outrun the first: `CLAUDE.md`
+line 10 records all four curators as "running, **ahead of their gate**," where
+README's phasing table admits the remaining three only "once the schema stops
+moving" — a gate requiring a curator-accuracy number that does not yet exist.
+
+**Ordering.** Ungated items first within each category, then dependency order. A
+gated item always sits below what it waits on. Cross-category gates are named.
+
+**The master gate** (`README.md` line 85): *"Each gate goes live only after you
+have personally audited its judgment for two weeks. A gate you don't trust is
+worse than no gate: it discards work silently and you never learn what you
+lost."*
+
+Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
+`CARD-EVAL-HANDOFF.md`. This file is the index, not the argument.
 
 ## Next step
 
-- [ ] Run the card-eval path end to end for the first time: smoke-test `python3 ingest/show_eprint.py 2506.07459 --list`, then `card_eval.py import` each of the four files in `eval/drafts/`, then `label`, then `score`. Nothing has ever been scored — `eval/card_runs/` is empty — and a large share of `score_run()` has never executed, so treat the first pass as debugging rather than measurement. ~3h
+- [ ] Read the stats cards and draft reports before labelling anything ~2h
+  - [ ] Read `kb/stats/cards/2512.16061.md` against its abstract ~20m
+  - [ ] Read `kb/stats/cards/2411.02771.md` against its abstract ~20m
+  - [ ] Read `kb/stats/cards/2608.16017.md` against its abstract ~20m
+  - [ ] Audit the quote inventory in `eval/drafts/2606.07914-report.md` ~30m
+  - [ ] Read the other three reports in `eval/drafts/` ~30m
+
+  Statistics is the domain you can referee unaided, so the stats cards come
+  first — they are where you form a standard rather than inherit one. The draft
+  reports come second because `label` will offer their verdicts as press-enter
+  defaults. Take 2606.07914 first of those: `CARD-EVAL-HANDOFF.md` §4 records
+  four of its citations pointing at sentences that did not establish the claim,
+  and its report predates the quote-inventory fix, so the handoff says treat
+  them as leads. The goal is not a verdict but the capacity to disagree with
+  one — `score_run()` warns that a run with zero overrides is uninterpretable,
+  and that is the likely outcome of labelling cold.
 
 ## Backlog
 
-- [ ] Insert a blank line between lines 52 and 53 of `.claude/agents/compbio-mechanism-curator.md`, where the alias paragraph runs into the `named_in_paper: false` sentence and markdown folds them into one
-- [ ] Settle `CARD-EVAL-HANDOFF.md` §7.2 and §7.3 — whether `named_in_paper` gets renamed or just documented, and renaming `score_run()`'s printed "object recall" label, which reports curator fidelity under a name that reads as KB completeness. Both are text-only and neither blocks labelling
-- [ ] Run `python3 ingest/backfill_source_pins.py`. The four curator prompts now tell curators to record `source_version` and `source_sha256`, so new cards will carry a pin and the existing 28 will not until this runs
-- [ ] Add a `name` validator to `ingest/validate_card.py` rejecting `(`, `/` and ` and ` in a `mathematical_objects` name. Catches `Hermitization (Girko's method)`, `Subset-rank and no-cancellation conditions`, and `Circuit skeleton / ansatz topology` at write time — all three are real and all three currently score `y`
-- [ ] Check whether arXiv 2601.03123 has a v2. If it does not, the abstract stored in `papers.sqlite` came from a version arXiv does not serve, which bears on all 28 cards (`CARD-EVAL-HANDOFF.md` §5.1)
-- [ ] Run `python3 ingest/show_eprint.py 2506.07459 --grep` against the §3.2.2 wording quoted in that card's `evidence` field, to settle whether the card was built outside its declared `sections_read` (§5.4a)
-- [ ] Run `python3 ingest/canon_tier.py apply`, then re-render exemplars. The `compbio_mechanism` worksheet edits — two strike reversals and ten rewritten reasons — are inert until this runs, and the two reversed papers are still eligible for the negative block (`PROJECT-STATUS.md` Tier 0 item 5)
-- [ ] Correct `CLAUDE.md`'s phase marker and point it at `PROJECT-STATUS.md` (Tier 0 item 4)
-- [ ] Add an optional `strike_superseded` field to `ingest/canon_index.py` so `exemplars()` skips overruled strike reasons, keeping the vetting record intact while keeping a reversed judgment out of the triage prompt (`EVAL-01-FINDINGS.md` B2, ~5 lines)
+### Evaluation — is the system's judgment right?
+
+- [ ] **E2.** Check how deep the `stats` admitted queue is
+
+  Decides the target size for the first measurement. Statistics is the domain to
+  measure on two independent grounds: it is the one you can referee unaided
+  (`CARD-EVAL-HANDOFF.md` §4), and it is the only domain whose charter carries
+  zero label-derived changes, so a claim against it is not circular the way every
+  other domain's is (`LABEL-USE-PROTOCOL.md`; `WEEK-3-PLAN.md` §4, OQ 1.6). The
+  obstacle is size: 3 stats cards in the KB, 1 of them in the eval sample.
+  `WEEK-3-PLAN.md` §4 gives queue depths for `compbio_methods` (26) and
+  `probability` (8) and does not mention `stats` — if that queue is thin, that is
+  a finding about triage or the charter, not a scheduling problem.
+  **Gates:** E3
+
+- [ ] **E3.** Curate `stats` up to the target, then re-sample it
+
+  `card_eval.py sample --domain stats --append`. This is the Week 2–3 shape the
+  project skipped: one curator, the domain you know best, enough cards to mean
+  something.
+  **Gated by:** E2. **Gates:** E6
+
+- [ ] **E4.** Settle `CARD-EVAL-HANDOFF.md` §7.2 and §7.3
+
+  Whether `named_in_paper` is renamed or documented, and renaming `score_run()`'s
+  printed "object recall", which reports curator fidelity under a name that reads
+  as KB completeness. §7's own heading: *"settle these before the numbers mean
+  anything."*
+  **Gates:** E6
+
+- [ ] **E5.** Smoke-test the eval path as pure debugging
+
+  - [ ] `python3 ingest/show_eprint.py 2506.07459 --list`
+  - [ ] `card_eval.py import` each of the four files in `eval/drafts/`
+  - [ ] Walk one card through `label`
+  - [ ] `card_eval.py score`
+
+  Needs no calibration — the point is finding crashes in code that has never
+  executed, not producing numbers.
+  **Gates:** E6
+
+- [ ] **E6.** Label the stats cards for real and score them
+
+  **Gated by:** E1, E3, E4, E5, D4. **Gates:** E7, D9, and everything in the
+  phasing table from Week 4 on.
+
+- [ ] **E7.** Let that number drive one decision about the card schema
+
+  Including, legitimately, the decision to change nothing.
+  `PROJECT-STATUS.md` §6 "Done means" items 2 and 3.
+  **Gated by:** E6. **Gates:** README Week 4, "remaining curators, once the
+  schema stops moving" — a gate already passed without it.
+
+- [ ] **E8.** Check whether arXiv 2601.03123 has a v2
+
+  If not, the abstract in `papers.sqlite` came from a version arXiv does not
+  serve, which bears on every card and on whether any `n` scored for absence is
+  safe (`CARD-EVAL-HANDOFF.md` §5.1).
+  **Gated by:** D3
+
+- [ ] **E9.** Settle whether 2506.07459 was built outside its declared sections
+
+  `python3 ingest/show_eprint.py 2506.07459 --grep` against the §3.2.2 wording in
+  that card's `evidence` field (§5.4a). Also tells you whether any already-judged
+  card needs re-judging.
+  **Gated by:** D3
+
+- [ ] **E10.** Write `focus.md`
+
+  All four sections are still comment stubs. It is one of the three channels
+  running back into the system (invariant 13), read by `math-scout` and
+  `bridge-finder` every weekly run, and `PROJECT-STATUS.md` §6 "Done means" item
+  4 requires it to say something true. README puts it in Week 1.
+
+- [ ] **E11.** Build a fresh held-out eval set for `compbio_methods`
+
+  Its charter was partly drafted from the 180 dev rows, so any recall/precision
+  claim against those same rows is circular (OQ 1.6). `stats` is unaffected and
+  remains valid as-is.
+  **Gated by:** OQ §1.3's fix
+
+### Development — build or fix the machinery
+
+- [ ] **D1.** Fix the two false statements in `CLAUDE.md`
+
+  Line 5 names `WEEK-1-PLAN.md` as the active phase when `PROJECT-STATUS.md`
+  supersedes `WEEK-3-PLAN.md`; line 13 says `card_eval.py` does not exist. It is
+  the file every agent reads first, so both misinform every agent at boot.
+  Replacement text in `dev-notes/curator-prompt-edits-pending.md` §10. Five
+  minutes, and already Tier 0 item 4.
+
+- [ ] **D2.** Correct the card count wherever it appears
+
+  The KB holds **30** cards — probability 11, compbio_methods 10,
+  compbio_mechanism 6, stats 3 — not the 28 in `CLAUDE.md` line 10 and the
+  handoffs. `CARD-EVAL-HANDOFF.md` §3 likewise tabulates 21 sampled cards where
+  `card_labels.jsonl` holds 20. Both are the failure `_load_cards` warns about:
+  a number written down once and never re-derived.
+
+- [ ] **D3.** Run `python3 ingest/backfill_source_pins.py`
+
+  The curator prompts now tell curators to record `source_version` and
+  `source_sha256`, so new cards will carry a pin and the existing ones will not
+  until this runs.
+  **Gates:** E8, E9
+
+- [ ] **D4.** Add a `--domain` filter to `card_eval.py score`
+
+  `score_run()` splits by field, by `named_in_paper` and by confidence, but never
+  by domain — so a `card_labels.jsonl` holding both the existing 20 cross-domain
+  records and a new stats sample yields one blended figure with no way to recover
+  the stats number. `sample` writes only to the fixed `LABELS` path, so a
+  separate file is not the easy way out. Small change; it is what makes E6
+  answerable.
+  **Gates:** E6
+
+- [ ] **D5.** Insert a blank line at `compbio-mechanism-curator.md` 52/53
+
+  The alias paragraph runs into the `named_in_paper: false` sentence and markdown
+  folds them into one.
+
+- [ ] **D6.** Add a `name` validator to `ingest/validate_card.py`
+
+  Reject `(`, `/` and ` and ` in a `mathematical_objects` name. Catches
+  `Hermitization (Girko's method)`, `Subset-rank and no-cancellation conditions`
+  and `Circuit skeleton / ansatz topology` at write time — all three are real and
+  all three currently score `y`.
+
+- [ ] **D7.** Run `python3 ingest/canon_tier.py apply`, then re-render exemplars
+
+  The `compbio_mechanism` worksheet edits — two strike reversals and ten
+  rewritten reasons — are inert until this runs, and the two reversed papers are
+  still eligible for the negative block (`PROJECT-STATUS.md` Tier 0 item 5).
+
+- [ ] **D8.** Add an optional `strike_superseded` field to `ingest/canon_index.py`
+
+  So `exemplars()` skips overruled strike reasons, keeping the vetting record
+  intact while keeping a reversed judgment out of the triage prompt
+  (`EVAL-01-FINDINGS.md` B2, ~5 lines).
+
+- [ ] **D9.** Consolidate the status documents ~3h
+
+  Per `dev-notes/notes-consolidation-plan.md`. Fifteen carry an action or
+  decision list, three define "done", and a live blocking decision sits outside
+  `OPEN-QUESTIONS.md`.
+  **Gated by:** E6 — deliberately, since that run is expected to produce a bug
+  list which is itself content for these files.

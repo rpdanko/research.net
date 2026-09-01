@@ -1,8 +1,9 @@
-# Pending `.claude/**` edits — apply by hand
+# Pending edits the assistant cannot apply — apply by hand
 
 `.claude/**` is not writable from the assistant side (invariant 11;
 `OPEN-QUESTIONS.md` §1.8, `PROJECT-STATUS.md` line 183, `CARD-EVAL-HANDOFF.md`
-§8). Edits that belong under `.claude/` accumulate here until applied by hand.
+§8), and `CLAUDE.md` is not either. Edits that belong in those files accumulate
+here until applied by hand.
 
 **Inventory verified against the live files on 2026-09-01**, not taken on trust
 from the notes that raised them. Status column reflects that check.
@@ -19,6 +20,7 @@ from the notes that raised them. Status column reflects that check.
 | 7 | Tell curators to use `card_notes` | all four `*-curator.md` | ESCALATION-REVIEW #4 | **applied 2026-09-01**, all four verified |
 | 8 | `1. Run Run` duplication | `compbio-mechanism-curator.md:16` | this session | **applied 2026-09-01** |
 | 9 | Missing blank line before line 53 | `compbio-mechanism-curator.md:52–53` | this session | pending — one keystroke |
+| 10 | Two false statements about current state | `CLAUDE.md` lines 5, 13 | PROJECT-STATUS Tier 0 item 4; ESCALATION-REVIEW #3 | pending — **highest value on this list** |
 
 ---
 
@@ -392,6 +394,54 @@ canonical-name rule above." That rule is literally above in `stats-curator.md`
 instead, so in those two "above" points at something that is not there. Either
 reword to name the charter, or leave it — the referent is recoverable. Low
 severity, but dangling references are how a prompt drifts from what it claims.
+
+---
+
+## 10. `CLAUDE.md` — two false statements in the file every agent reads first
+
+**Status:** pending · **do this one first.** It is the cheapest item here and the
+only one that misinforms every agent at boot.
+
+`CLAUDE.md` is the entry point. Both defects are already on record —
+`PROJECT-STATUS.md` Tier 0 item 4 and `ESCALATION-REVIEW.md` §6 item 3 — and
+neither has been applied.
+
+### Edit A — line 5: the phase pointer is two weeks stale
+
+Current:
+
+> Read `PROJECT-STATUS.md` for current state and next actions. `research-network-architecture.md` has the full design and cost model. **`WEEK-1-PLAN.md` is the active phase.** `HYBRID-SYSTEM-REVIEW.md` is why invariants 13–16 exist and `DISTORTION-REVIEW.md` is why 17–19 do; read the relevant one before touching either group.
+
+`WEEK-3-PLAN.md` exists, and `PROJECT-STATUS.md` supersedes *it*. A fresh agent
+is being pointed two phases back. Proposed:
+
+> Read `TODO.md` for the next action and `PROJECT-STATUS.md` for current state. `OPEN-QUESTIONS.md` is the decision register — check it before re-opening a settled question. `research-network-architecture.md` has the full design and cost model. `HYBRID-SYSTEM-REVIEW.md` is why invariants 13–16 exist and `DISTORTION-REVIEW.md` is why 17–19 do; read the relevant one before touching either group. **The week plans and the handoffs are superseded records, not current state — do not take a next action from one.**
+
+That last sentence is the part that keeps working after the next phase lands. It
+inoculates against the whole class rather than fixing one instance of it.
+
+### Edit B — line 13: says a file that exists does not exist
+
+Current:
+
+> Before enabling anything further: card extraction has never been measured — **`card_eval.py` does not exist**, so the phasing gate "the schema stops moving" has not been passed. Each gate goes live only after the user has personally audited its judgment for two weeks.
+
+It exists, it is roughly a thousand lines, and it gained `import`, a `u` verdict
+with reason codes, `--recheck`, a precision band and a `card_notes` counter on
+2026-09-01. Proposed:
+
+> Before enabling anything further: card extraction has never been measured. `ingest/card_eval.py` is written but has never been run — **check whether `eval/card_runs/` is empty rather than trusting this sentence**, which is exactly the kind of claim that goes stale. Until a run exists, the phasing gate "the schema stops moving" has not been passed. Each gate goes live only after the user has personally audited its judgment for two weeks.
+
+Pointing at a checkable artifact instead of restating state is deliberate. The
+original sentence was true when written and became false without anything
+noticing, which is the failure `ingest/card_eval.py`'s own `_load_cards`
+docstring warns about: "a number written down once and never re-derived."
+
+### Not proposed
+
+Lines 9–11 carry the ingest/triage figures with a run id attached
+(`eval/runs/20260827-214656`). That is sourced correctly and should stay as it
+is. The `Layout` block's `.claude/` line was not verified against a file count.
 
 ---
 
