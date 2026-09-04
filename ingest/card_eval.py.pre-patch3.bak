@@ -344,7 +344,7 @@ def _is_judged(r):
     the resume logic: label() would skip the in-progress card entirely on
     restart and open the next untouched one instead. Fixed 2026-08-30 after
     exactly that happened on 2410.16457.
-
+    """
     Second fix, 2026-09-01: objects are only required when
     `mathematical_objects` is actually one of the fields being judged. sample()
     populates r["objects"] from the card regardless, so under a `--fields`
