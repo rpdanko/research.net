@@ -144,30 +144,12 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
   (2411.02771). Two of the three stats cards are in that set, which is the domain
   the project chose to measure on.
 
-  **Second half closed by patch 2, 2026-09-03**
-  (`patches/patch-02-level-aware-sections.py`): level-aware `SECTION_RE`. It was
-  held back for one measurement, and the measurement mattered — unbounded, it
-  made 2508.08218's conclusion absorb seven proof subsections and run to 31,170
-  chars. With patch 1's boundary in place that section does not move at all, and
-  only six sections across six cards change, five of them absorbing
-  contributions lists, main results or limitations.
-
-  Shipped with `MAX_SECTION_CHARS` unchanged at 16,000. Three sections clip, but
-  a level-aware slice starts where the flat one did and continues, so every card
-  still receives strictly more than before — 2411.02771's intro goes 0 → 16,000.
-  Cost ~+425 tokens per card. Accepted defect: the cut falls at a character
-  position rather than a subsection edge, so 2605.29962's intro ends
-  mid-sentence; the notice now reports the true length so the curator can size
-  what it did not get.
-
-  **Still open — and it is a decision, not a fix.** Eleven cards across four
-  domains were built from a window the extractor no longer produces: gained a
-  conclusion — 2007.11761, 2502.11152, 2608.16017; re-picked — 2506.07459,
-  2605.29508; widened — 2411.02771, 2410.16457, 2508.08218, 2401.16556,
-  2605.29962, 2608.11475. Two of the three `stats` cards are in that set.
-  Whether any are re-curated belongs to E7, and Tier 4 forbids the spend before
-  E6 has produced a number.
-  **Gates:** E3, and the re-curation decision (E7).
+  **Still open, and deliberately not in that patch:** level-aware `SECTION_RE`.
+  It fixes the empty intro and recovers main-results subsections currently
+  discarded on theory papers, but it changes the window for every paper using
+  subsections, so it is a re-curation trigger rather than a bug fix. Re-measure
+  with D0's boundary in place first — the unbounded figures overstate it.
+  **Gates:** E3, and any decision about re-curating the six affected cards (E7).
 
 - [ ] **D1.** Fix the two false statements in `CLAUDE.md`
 

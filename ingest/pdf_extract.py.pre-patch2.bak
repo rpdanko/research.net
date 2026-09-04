@@ -115,16 +115,8 @@ HEADINGS = {
         r"(?:conclusions?|discussions?|summary|summaries)\s+and\s+", re.I),
 }
 
-# Group 1 is the level ("sub" or None), group 2 the heading. The level used to
-# be matched and discarded, which is what made `_sections` end a section at its
-# own first subsection -- see that function.
-#
-# `\subsubsection` is deliberately still unmatched: `\` + optional `sub` +
-# `section` cannot consume it. Depth-3 content has therefore always been
-# absorbed into its depth-2 parent, and level-awareness below makes depths 1-2
-# behave the same way rather than adding a third rule.
 SECTION_RE = re.compile(
-    r"\\(sub)?section\*?\s*\{((?:[^{}]|\{[^{}]*\})*)\}", re.S)
+    r"\\(?:sub)?section\*?\s*\{((?:[^{}]|\{[^{}]*\})*)\}", re.S)
 
 # Where the document PROPER ends. Everything past the first of these is
 # appendix, supplementary material or back matter, and nothing after it should
@@ -301,7 +293,7 @@ def _strip(tex):
 
 def _heading_texts(chunk):
     """Cleaned heading strings inside a slice of the document."""
-    return [re.sub(r"\\[a-zA-Z]+", "", m.group(2)).strip()
+    return [re.sub(r"\\[a-zA-Z]+", "", m.group(1)).strip()
             for m in SECTION_RE.finditer(chunk)]
 
 
@@ -333,21 +325,10 @@ def _sections(tex):
         if any(HEADINGS["conclusion"].match(h) for h in _heading_texts(head)):
             body, cut_applied = head, True
 
-    # Level-aware since 2026-09-03. A body runs to the next mark of the SAME OR
-    # HIGHER level, so a section absorbs its subsections and a subsection still
-    # ends at its sibling. Before this, every body ended at the next mark of any
-    # level, which made a section whose prose is entirely in subsections come
-    # back EMPTY while being reported as found (2411.02771), and discarded
-    # main-results subsections on theory papers (2410.16457 §1.2, §1.3).
-    marks = [(m.start(), m.end(), 2 if m.group(1) else 1, m.group(2))
-             for m in SECTION_RE.finditer(body)]
+    marks = [(m.start(), m.end(), m.group(1)) for m in SECTION_RE.finditer(body)]
     out = []
-    for i, (s, e, lvl, head) in enumerate(marks):
-        stop = len(body)
-        for j in range(i + 1, len(marks)):
-            if marks[j][2] <= lvl:
-                stop = marks[j][0]
-                break
+    for i, (s, e, head) in enumerate(marks):
+        stop = marks[i + 1][0] if i + 1 < len(marks) else len(body)
         out.append((re.sub(r"\\[a-zA-Z]+", "", head).strip(), body[e:stop]))
     return out, {"cut_at": cut_at, "cut_applied": cut_applied,
                  "full_len": full_len}
@@ -440,15 +421,8 @@ def extract(arxiv_id, wanted, refresh=False):
         head, raw = hit
         text = _strip(raw)
         if len(text) > MAX_SECTION_CHARS:
-            # Report the TRUE length, not just the limit. Level-aware slicing
-            # clips three sections in the current KB, and a notice that says
-            # only "truncated at 16000" tells the curator nothing about whether
-            # it lost a paragraph or thirty thousand characters. Same doctrine
-            # as `## conclusion — NOT FOUND (<why>)`: a shortfall the curator
-            # can size is one it can put in `confidence` and `card_notes`.
-            text = text[:MAX_SECTION_CHARS] + (
-                f"\n\n[truncated at {MAX_SECTION_CHARS} of {len(text)} chars; "
-                f"{len(text) - MAX_SECTION_CHARS} not shown]")
+            text = text[:MAX_SECTION_CHARS] + \
+                f"\n\n[truncated at {MAX_SECTION_CHARS} chars]"
         out["sections"][w] = text
         out.setdefault("headings", {})[w] = head
     return out

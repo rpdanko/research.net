@@ -12,13 +12,8 @@ deliberation that produced it. Pre-prune copy: `OPEN-QUESTIONS.md.pre-prune.bak`
 §1.6, §2.2 and §2.3 by number, so identifiers are preserved even where the body changed or
 the item closed. Don't renumber.
 
-**Environment note:** **test this rather than believing it** — it has been false in at
-least one session (2026-09-03), where read-only diagnostics ran locally and produced
-`TODO.md` D0. Two caveats survive even when the sandbox does start: there is no network,
-so anything resolving against arXiv or OpenAlex is still your side; and a sandbox holds a
-*copy* of the repo, so state-mutating runs do not transfer. Read-only diagnostics against
-`ingest/cache/` and `papers.sqlite` are the useful class. Items marked **[shell]** that
-need the network, or that write state you intend to keep, remain yours.
+**Environment note:** the Linux sandbox will not start on this machine, so anything marked
+**[shell]** has to run on your side. I can write and edit files, not execute them.
 
 ---
 

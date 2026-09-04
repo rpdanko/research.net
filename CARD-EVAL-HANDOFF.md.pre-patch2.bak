@@ -222,17 +222,10 @@ vague.
    Two consequences for the rest of this file. **§5.2's policy question was
    argued against the wrong data**: on 2410.16457, "Circular law for general
    models" and "Weak delocalization estimates" are §1.2 and §1.3 — inside the
-   curator's requested window, discarded by a slicer bug rather than excluded by
-   design. Patch 2 (2026-09-03) delivers them: that intro goes from 3,168 to
-   20,285 characters, capped at 16,000. So the window policy is a narrower
-   question than this section framed it — the abstract/intro/conclusion choice
-   is still a decision for you, but a measurable part of what looked like its
-   cost was a defect, and it is fixed. Re-read §5.2's re-audit table with that
-   in mind before treating any of its `objects_missed` numbers as settled.
-
-   And **§5.4's reading of `sections_read` is too kind**: on 2605.29508 it claims
-   `conclusion` while the delivered text was an appendix subsection, so the field
-   can mis-report, not merely under-report.
+   curator's requested window, discarded by a boundary bug rather than excluded
+   by design. And **§5.4's reading of `sections_read` is too kind**: on
+   2605.29508 it claims `conclusion` while the delivered text was an appendix
+   subsection, so the field can mis-report, not merely under-report.
 
    The corroboration in the other direction still stands unchanged: 2606.07914
    is a card where the conclusion *was* matched, and its `limitations` are

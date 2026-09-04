@@ -128,47 +128,6 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
 
 ### Development — build or fix the machinery
 
-- [ ] **D0.** Bound `pdf_extract.py` at the end of the document proper —
-  **APPLIED by patch 1, 2026-09-03** (`patches/patch-01-extractor-boundaries.py`;
-  see `patches/README.md` for the ledger)
-
-  Ungated, and it sat above E3 because E3 spends curator calls to build the
-  sample E6 scores, and every card E3 writes inherits the extractor's window.
-  Reproduce with `python3 ingest/audit_extraction.py`.
-
-  Six of 28 cards were built from a defective window: three whose real closing
-  section was missed by the heading regex (2007.11761 "The conclusion",
-  2502.11152 "Conclusions", 2608.16017 "Summary"), two handed a conclusion-shaped
-  heading from inside the appendix instead of the real one (2506.07459,
-  2605.29508), and one whose intro came back empty while being reported as found
-  (2411.02771). Two of the three stats cards are in that set, which is the domain
-  the project chose to measure on.
-
-  **Second half closed by patch 2, 2026-09-03**
-  (`patches/patch-02-level-aware-sections.py`): level-aware `SECTION_RE`. It was
-  held back for one measurement, and the measurement mattered — unbounded, it
-  made 2508.08218's conclusion absorb seven proof subsections and run to 31,170
-  chars. With patch 1's boundary in place that section does not move at all, and
-  only six sections across six cards change, five of them absorbing
-  contributions lists, main results or limitations.
-
-  Shipped with `MAX_SECTION_CHARS` unchanged at 16,000. Three sections clip, but
-  a level-aware slice starts where the flat one did and continues, so every card
-  still receives strictly more than before — 2411.02771's intro goes 0 → 16,000.
-  Cost ~+425 tokens per card. Accepted defect: the cut falls at a character
-  position rather than a subsection edge, so 2605.29962's intro ends
-  mid-sentence; the notice now reports the true length so the curator can size
-  what it did not get.
-
-  **Still open — and it is a decision, not a fix.** Eleven cards across four
-  domains were built from a window the extractor no longer produces: gained a
-  conclusion — 2007.11761, 2502.11152, 2608.16017; re-picked — 2506.07459,
-  2605.29508; widened — 2411.02771, 2410.16457, 2508.08218, 2401.16556,
-  2605.29962, 2608.11475. Two of the three `stats` cards are in that set.
-  Whether any are re-curated belongs to E7, and Tier 4 forbids the spend before
-  E6 has produced a number.
-  **Gates:** E3, and the re-curation decision (E7).
-
 - [ ] **D1.** Fix the two false statements in `CLAUDE.md`
 
   Line 5 names `WEEK-1-PLAN.md` as the active phase when `PROJECT-STATUS.md`
@@ -177,23 +136,13 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
   Replacement text in `dev-notes/curator-prompt-edits-pending.md` §10. Five
   minutes, and already Tier 0 item 4.
 
-- [ ] **D2.** Correct the sampled-card count in `CARD-EVAL-HANDOFF.md` §3
+- [ ] **D2.** Correct the card count wherever it appears
 
-  **Rewritten 2026-09-03; the previous version of this item was wrong and
-  executing it would have introduced the error it was filed to remove.** It
-  claimed the KB holds 30 cards — probability 11, compbio_methods 10 — and that
-  the 28 in `CLAUDE.md` line 10 was the mistake. **28 is correct**: probability
-  10, compbio_methods 9, compbio_mechanism 6, stats 3, and all four
-  `index.jsonl` files agree, as does `PROJECT-STATUS.md` §2. No card count needs
-  changing anywhere.
-
-  What survives: `CARD-EVAL-HANDOFF.md` §3 tabulates 21 sampled cards where
-  `card_labels.jsonl` holds 20. That one is real.
-
-  The item is left here rather than deleted because it is the sharpest instance
-  of the failure `_load_cards` warns about — a number written down once and
-  never re-derived — and this time the correction was the thing that went
-  unchecked. Re-derive before quoting; never trust a document that counts.
+  The KB holds **30** cards — probability 11, compbio_methods 10,
+  compbio_mechanism 6, stats 3 — not the 28 in `CLAUDE.md` line 10 and the
+  handoffs. `CARD-EVAL-HANDOFF.md` §3 likewise tabulates 21 sampled cards where
+  `card_labels.jsonl` holds 20. Both are the failure `_load_cards` warns about:
+  a number written down once and never re-derived.
 
 - [ ] **D3.** Run `python3 ingest/backfill_source_pins.py`
 

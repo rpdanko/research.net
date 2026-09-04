@@ -86,7 +86,7 @@ first is due now; the rest are phase-gated.
 | Per-domain labels | `compbio_methods` 101/26 admits · `stats` 40/26 · `probability` 29/17 · `compbio_mechanism` 10/3 |
 | Charters | All four live; `stats` pass-4 promoted; `compbio_mechanism` has a rewrite-prep with all four rulings made |
 | Canon | Tier 0/1/2 built; `compbio_mechanism` worksheet edited today, **not yet propagated** |
-| Scripts | `run_triage`, `apply_triage`, `pdf_extract`, `rebuild_index` all written and exercised. `pdf_extract` was exercised *and defective*: six of 28 cards were built from a short window, fixed 2026-09-03 (`TODO.md` D0). Exercised is not measured |
+| Scripts | `run_triage`, `apply_triage`, `pdf_extract`, `rebuild_index` all written and exercised |
 | Sampler | `random.shuffle(picks)` fix applied; safe to draw a fresh set |
 | `settings.json` | Correct — `Edit` denies present, `Bash` allows use `python3` |
 | `strike_superseded` | Implemented in `canon_index.py` (EVAL-01 §4B/B2 landed at some point) |

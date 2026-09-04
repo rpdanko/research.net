@@ -201,43 +201,12 @@ vague.
 1. **Missing objects from §3/§4 — not a defect.** The curator was forbidden to
    look. Counting these against it scores the curator on information it was
    instructed not to have. See §7.3, now answered.
-2. **"Conclusion section was not matched by the extractor" — a real bug, but
-   not on the cards named here. Corrected 2026-09-03.**
-
-   The original text cited 2410.16457 and 2309.12441 as the evidence. Both are
-   wrong: reproduced from the cached e-prints, **neither paper has a closing
-   section of any kind**, so both cards are correct and there is no bug on
-   either. Seven of the twelve cards without a delivered conclusion are in that
-   position — 2109.02644, 2307.13826, 2309.12441, 2401.16556, 2410.16457,
-   2605.29962, 2512.16061 — and 2408.14242 is a PDF-only submission with no
-   LaTeX source at all.
-
-   The bug is real and lands on a disjoint set of six cards, all now fixed by
-   patch 1, 2026-09-03 (`patches/patch-01-extractor-boundaries.py`; see
-   `TODO.md` D0):
-   three missed by the heading regex, two handed an appendix heading by
-   `_pick`'s last-match rule, one whose intro came back empty while reported as
-   found. `ingest/audit_extraction.py` reproduces the classification.
-
-   Two consequences for the rest of this file. **§5.2's policy question was
-   argued against the wrong data**: on 2410.16457, "Circular law for general
-   models" and "Weak delocalization estimates" are §1.2 and §1.3 — inside the
-   curator's requested window, discarded by a slicer bug rather than excluded by
-   design. Patch 2 (2026-09-03) delivers them: that intro goes from 3,168 to
-   20,285 characters, capped at 16,000. So the window policy is a narrower
-   question than this section framed it — the abstract/intro/conclusion choice
-   is still a decision for you, but a measurable part of what looked like its
-   cost was a defect, and it is fixed. Re-read §5.2's re-audit table with that
-   in mind before treating any of its `objects_missed` numbers as settled.
-
-   And **§5.4's reading of `sections_read` is too kind**: on 2605.29508 it claims
-   `conclusion` while the delivered text was an appendix subsection, so the field
-   can mis-report, not merely under-report.
-
-   The corroboration in the other direction still stands unchanged: 2606.07914
-   is a card where the conclusion *was* matched, and its `limitations` are
-   visibly sharper — two bullets sourced near-verbatim to the conclusion instead
-   of inferred.
+2. **"Conclusion section was not matched by the extractor" — a real bug.**
+   2410.16457 and 2309.12441 both say this. There the curator *asked* for the
+   conclusion and did not get it. That is a genuine `pdf_extract.py` section-matching
+   failure, and it is worth fixing: 2606.07914 is the one card where the conclusion
+   *was* matched, and its `limitations` are visibly sharper — two bullets sourced
+   near-verbatim to the conclusion instead of inferred.
 
 **The open question is a policy one, not a repair.** Is abstract/intro/conclusion
 the right window? It is cheap and it captures the paper's own framing of what
@@ -256,7 +225,7 @@ Not curator-specific — the same curator both under- and over-populates it.
 | 2410.16457 | **zero** aliases on all 7 objects; "ESD" read in the abstract and dropped |
 | 2606.07914 | 3 of 7 populated; `Finite mixture model` → "mixing matrix" (a *part*, contradicting the card's own role text) |
 | 2506.07459 | 3 of 7 defective; `GRPO` → "RAFT", "DPO", which the paper twice calls **different algorithms** |
-| 2506.07459 | `KL divergence` → "trust region" — **attributed to 2608.17381 until 2026-09-03; that card has no KL object.** So these defects span four cards, not five, and 2506.07459 carries two |
+| 2608.17381 | `KL divergence` → "trust region" |
 | 2601.03123 | `Unitary synthesis` → "unitary compilation", which §2 **explicitly separates** |
 
 **This hangs entirely on an unsettled question — see §7.1.** If `aliases` means
@@ -395,39 +364,12 @@ the marks that were cleared:
 
 ## 7. Open decisions — settle these before the numbers mean anything
 
-### 7.1 Does `aliases` mean synonyms, or related terms worth matching on? — **RULED 2026-09-01; propagated here 2026-09-03**
+### 7.1 Does `aliases` mean synonyms, or related terms worth matching on?
 
-**Synonyms.** The ruling and its reasoning live in
-`dev-notes/curator-prompt-edits-pending.md` under "Context: the §7.1 ruling that
-item 4 implements" — *"`aliases` means synonyms. Settled 2026-09-01"* — with
-five corroborating files, a rejected `related:` field, and the asymmetry caveat.
-`card_schema.json`'s `aliases` description carries it, and
-`compbio-mechanism-curator.md` carries it in prose with a worked example.
-
-The version of this section that stood until 2026-09-03 said
-"`card_schema.json` does not say", which had been false for two days, and
-predicted the ruling would dissolve roughly half the alias defects. **It does the
-opposite: five of six stand.** The corrected table is in the dev-note.
-
-Three things the ruling does not settle, and they are the live part:
-
-1. **Retroactivity.** The 28 existing cards were written under prose compatible
-   with either reading. `source_version`'s precedent — "make it required after a
-   re-curation pass, not before" — and Tier 4's rule against spending model
-   calls before the schema is known stable both point at forward-only, with the
-   re-curation question handed to E7.
-2. **Enforcement.** `card_eval.py` contains no occurrence of "alias": no
-   prompt, no letter, no tally. §5.6 item 1 names "object right, alias wrong" as
-   a gap and §7.5 declines to give it a letter, so the defects the ruling makes
-   real are invisible to `score`. False merges are already countable as
-   `conceptual-math`; **under-population has no tag at all**, and the dev-note
-   calls it the more expensive failure. `score_run` has `objects_missed` and no
-   `aliases_missed`.
-3. **One of the user's own files is in violation.** The worked example states
-   that `factor graph inference` fails the rule as a broader family. That pair is
-   an alias on `belief propagation` in `kb/concordance_user.jsonl`, which is
-   agent-denied, and `math-scout` — the component invariant 15 designates to
-   arbitrate identity — has never run.
+Determines whether roughly **half** the object defects across five cards are
+defects. Under "synonyms", `GRPO → DPO` and `Unitary synthesis → unitary
+compilation` are false identities that merge concordance nodes. Under "related
+terms", both are fine. `card_schema.json` does not say.
 
 ### 7.2 `named_in_paper` — **largely answered; a naming fix remains**
 

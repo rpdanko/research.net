@@ -78,66 +78,22 @@ EPRINT = "http://export.arxiv.org/e-print/"
 ABS_API = "http://export.arxiv.org/api/query?id_list="
 
 DELAY = 3.1                 # matches arxiv_pull.py; do not lower
-# Raised from 8000 on 2026-09-03. At 8000, eight sections across seven cards
-# were clipped and 22,717 characters -- ~11% of the whole intro/conclusion
-# corpus -- were discarded with only the truncation notice as a trace. The
-# longest real slice in the KB is 14,740 (2007.11761's intro), so 16000 makes
-# the cap non-binding on every card currently held, at a cost of roughly 6,000
-# tokens across all 28. The end-of-body cut below also removes appendix bloat
-# from conclusions, which lowers the pressure rather than raising it.
-MAX_SECTION_CHARS = 16000   # per section, after cleaning
+MAX_SECTION_CHARS = 8000    # per section, after cleaning
 ALL_SECTIONS = ("abstract", "intro", "conclusion")
 
 # Deliberately generous on the conclusion side. A theory paper may close with
 # "Discussion", "Concluding remarks", "Summary and outlook" or nothing at all,
 # and a curator reading a missing conclusion writes a worse card than one
 # reading a section called Discussion.
-#
-# Widened 2026-09-03 after three real headings in the KB were found unmatched:
-# "Conclusions" (2502.11152) -- `conclusion\b` fails on the plural, since `s`
-# is a word character; "The conclusion" (2007.11761) -- the pattern anchors at
-# line start, so any leading article defeats it; and "Summary" (2608.16017) --
-# only `summary and <X>` was accepted.
-#
-# Note what the two branches buy. The first requires the closing word to be the
-# WHOLE heading (`\s*$`), the second allows `<word> and ...`. That is tighter
-# than the old `\b`, not looser: it drops two false positives the old pattern
-# had -- "Discussion of related work" and "Conclusion of the proof", either of
-# which could steal the pick as the last match. Tested against every heading in
-# all 27 cached sources: exactly the three cards above change, no new matches.
 HEADINGS = {
     "intro": re.compile(r"^\s*(\d+[.\s]*)?introduction\b", re.I),
     "conclusion": re.compile(
-        r"^\s*(?:\d+[.\s]*)?(?:the\s+)?"
-        r"(?:conclusions?|concluding\s+remarks?|closing\s+remarks?"
-        r"|discussions?|summary|final\s+remarks?|outlook)\s*$"
-        r"|^\s*(?:\d+[.\s]*)?(?:the\s+)?"
-        r"(?:conclusions?|discussions?|summary|summaries)\s+and\s+", re.I),
+        r"^\s*(\d+[.\s]*)?(conclusion|concluding\s+remarks|discussion"
+        r"|summary\s+and\s+(outlook|discussion|conclusion)|outlook)\b", re.I),
 }
 
-# Group 1 is the level ("sub" or None), group 2 the heading. The level used to
-# be matched and discarded, which is what made `_sections` end a section at its
-# own first subsection -- see that function.
-#
-# `\subsubsection` is deliberately still unmatched: `\` + optional `sub` +
-# `section` cannot consume it. Depth-3 content has therefore always been
-# absorbed into its depth-2 parent, and level-awareness below makes depths 1-2
-# behave the same way rather than adding a third rule.
 SECTION_RE = re.compile(
-    r"\\(sub)?section\*?\s*\{((?:[^{}]|\{[^{}]*\})*)\}", re.S)
-
-# Where the document PROPER ends. Everything past the first of these is
-# appendix, supplementary material or back matter, and nothing after it should
-# be eligible to be returned as a conclusion or absorbed into one.
-#
-# Coverage in the KB's 27 LaTeX sources: a bibliography marker in 27/27, an
-# appendix-family marker in 13/27. Acknowledgements and "Supplementary" headings
-# were considered and dropped -- redundant given full bibliography coverage, and
-# acknowledgements is the one marker that can legitimately precede a conclusion,
-# so including it would add the only real failure mode for no gain.
-END_OF_BODY = re.compile(
-    r"\\appendix\b|\\begin\{appendi(?:x|ces)\}|\\appendices\b"
-    r"|\\begin\{thebibliography\}|\\bibliography\s*\{|\\printbibliography")
+    r"\\(?:sub)?section\*?\s*\{((?:[^{}]|\{[^{}]*\})*)\}", re.S)
 
 
 # ------------------------------------------------------------------ metadata
@@ -299,58 +255,16 @@ def _strip(tex):
     return re.sub(r"\n{3,}", "\n\n", tex).strip()
 
 
-def _heading_texts(chunk):
-    """Cleaned heading strings inside a slice of the document."""
-    return [re.sub(r"\\[a-zA-Z]+", "", m.group(2)).strip()
-            for m in SECTION_RE.finditer(chunk)]
-
-
 def _sections(tex):
-    """([(heading, body)], info) in document order, from \\begin{document} to the
-    end of the document proper.
-
-    `info` carries `cut_at` -- the offset of the first END_OF_BODY marker, or
-    None -- and `cut_applied`, which is False when the guard declined. Both feed
-    the missing-section diagnostic, which previously could not tell "this paper
-    has no closing section" from "its closing section is inside the appendix".
-
-    THE GUARD. Trim only if trimming leaves a conclusion candidate behind. A
-    paper whose only conclusion-shaped heading sits after the bibliography is
-    rare and this corpus has none; if one arrives, keeping today's behaviour is
-    the conservative choice, at the known cost that the curator may be handed
-    appendix text on such a paper. What it buys is that this change cannot
-    regress a card that currently receives a real conclusion.
-    """
+    """[(heading, body)] in document order, from \\begin{document} onward."""
     start = tex.find("\\begin{document}")
     body = tex[start:] if start >= 0 else tex
-    full_len = len(body)
-
-    cut = END_OF_BODY.search(body)
-    cut_at = cut.start() if cut else None
-    cut_applied = False
-    if cut_at is not None:
-        head = body[:cut_at]
-        if any(HEADINGS["conclusion"].match(h) for h in _heading_texts(head)):
-            body, cut_applied = head, True
-
-    # Level-aware since 2026-09-03. A body runs to the next mark of the SAME OR
-    # HIGHER level, so a section absorbs its subsections and a subsection still
-    # ends at its sibling. Before this, every body ended at the next mark of any
-    # level, which made a section whose prose is entirely in subsections come
-    # back EMPTY while being reported as found (2411.02771), and discarded
-    # main-results subsections on theory papers (2410.16457 §1.2, §1.3).
-    marks = [(m.start(), m.end(), 2 if m.group(1) else 1, m.group(2))
-             for m in SECTION_RE.finditer(body)]
+    marks = [(m.start(), m.end(), m.group(1)) for m in SECTION_RE.finditer(body)]
     out = []
-    for i, (s, e, lvl, head) in enumerate(marks):
-        stop = len(body)
-        for j in range(i + 1, len(marks)):
-            if marks[j][2] <= lvl:
-                stop = marks[j][0]
-                break
+    for i, (s, e, head) in enumerate(marks):
+        stop = marks[i + 1][0] if i + 1 < len(marks) else len(body)
         out.append((re.sub(r"\\[a-zA-Z]+", "", head).strip(), body[e:stop]))
-    return out, {"cut_at": cut_at, "cut_applied": cut_applied,
-                 "full_len": full_len}
+    return out
 
 
 def _pick(sections, which):
@@ -411,7 +325,7 @@ def extract(arxiv_id, wanted, refresh=False):
             out["sections"]["abstract"] = alt
             del out["missing"]["abstract"]
 
-    sections, docinfo = _sections(tex)
+    sections = _sections(tex)
     if not sections:
         for w in need_source:
             out["missing"][w] = "no \\section commands found in source"
@@ -420,35 +334,15 @@ def extract(arxiv_id, wanted, refresh=False):
     for w in need_source:
         hit = _pick(sections, w)
         if hit is None:
-            # Report the END of the heading list, not the start. The old
-            # message printed the first eight marks -- which include
-            # subsections, so on a paper of any depth it never reached the
-            # closing section and read as "this paper has no conclusion". That
-            # is how 2608.16017's `\section{Summary}` stayed invisible from
-            # Week 2 to 2026-09-03, and why WEEK-2-PLAN.md's open item on it
-            # could not be resolved by reading the output.
-            heads = [h for h, _ in sections]
-            note = (f"no section heading matched; {len(heads)} headings, "
-                    f"ending: {', '.join(heads[-6:]) or '(none)'}")
-            if docinfo["cut_at"] is not None:
-                pct = 100.0 * docinfo["cut_at"] / max(1, docinfo["full_len"])
-                note += (f"; back matter begins at {pct:.0f}% and was "
-                         f"{'trimmed' if docinfo['cut_applied'] else 'NOT trimmed'} "
-                         f"before matching")
-            out["missing"][w] = note
+            out["missing"][w] = (
+                f"no section heading matched; document has: "
+                f"{', '.join(h for h, _ in sections[:8])}")
             continue
         head, raw = hit
         text = _strip(raw)
         if len(text) > MAX_SECTION_CHARS:
-            # Report the TRUE length, not just the limit. Level-aware slicing
-            # clips three sections in the current KB, and a notice that says
-            # only "truncated at 16000" tells the curator nothing about whether
-            # it lost a paragraph or thirty thousand characters. Same doctrine
-            # as `## conclusion — NOT FOUND (<why>)`: a shortfall the curator
-            # can size is one it can put in `confidence` and `card_notes`.
-            text = text[:MAX_SECTION_CHARS] + (
-                f"\n\n[truncated at {MAX_SECTION_CHARS} of {len(text)} chars; "
-                f"{len(text) - MAX_SECTION_CHARS} not shown]")
+            text = text[:MAX_SECTION_CHARS] + \
+                f"\n\n[truncated at {MAX_SECTION_CHARS} chars]"
         out["sections"][w] = text
         out.setdefault("headings", {})[w] = head
     return out
