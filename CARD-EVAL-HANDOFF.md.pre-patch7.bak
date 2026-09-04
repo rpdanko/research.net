@@ -402,22 +402,12 @@ python3 ingest/card_eval.py label
 python3 ingest/card_eval.py score
 ```
 
-**The `import` → `label` → `score` path was executed end to end on 2026-09-04
-and works.** Exit 0 throughout, in a scratch copy of the repo so that
-`eval/card_runs/` stays empty until E6 — `CLAUDE.md` line 13 makes that
-directory's emptiness the test of whether this measurement has happened, and a
-debugging run must not answer it. Results and the two defects found are in
-`TODO.md` E5; the fixes are patch 8.
+**The `import` → `label` → `score` path has never been executed end to end.**
+Expect to fix something on the first pass.
 
-**Three of the four `import` commands above are no-ops.** 2606.07914,
-2506.07459 and 2601.03123 skip as already-judged — which §3 predicts and this
-list did not say — so only 2608.17381 actually loads a draft. Run them anyway:
-the skip message is the confirmation that your five hand judgments are not
-about to be overwritten.
-
-With five of twenty judged, `score` is thin — but the run surfaced that the
-provenance block reads usefully and that `unrecorded=2` reaches every headline
-figure unremarked, which is E4a as an observation rather than a prediction.
+With five of twenty judged, `score` will be thin — but running it now surfaces
+crashes and shows whether the provenance and error-type blocks read usefully,
+which is worth more at this stage than the numbers.
 
 *Corrected 2026-09-04: read "six of twenty-one". §1 corrected those figures on
 2026-09-03 and patch 5 rewrote §3's table to match; this sentence was missed, so

@@ -29,10 +29,8 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
 - [ ] **E1.** Read the three stats cards and four draft reports before labelling ~2h
   - [x] Smoke-test `python3 ingest/show_eprint.py 2506.07459 --list` ~5m
   - [ ] Read `kb/stats/cards/2512.16061.md` against `show_eprint.py 2512.16061` ~20m
-  - [ ] Read `kb/stats/cards/2411.02771.md` — window changed most; read the
-        window note below before scoring anything `n` ~20m
-  - [ ] Read `kb/stats/cards/2608.16017.md` — gained a 1,451-char conclusion
-        the curator never saw ~20m
+  - [ ] Read `kb/stats/cards/2411.02771.md` — D0: its intro came back empty ~20m
+  - [ ] Read `kb/stats/cards/2608.16017.md` — D0: its "Summary" was missed ~20m
   - [ ] Audit the quote inventory in `eval/drafts/2606.07914-report.md` ~30m
   - [ ] Read the other three reports in `eval/drafts/` ~30m
 
@@ -49,50 +47,15 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
   Read each card against the **cached e-print**, not the `papers.sqlite`
   abstract. §5.1 found that abstract diverging materially from arXiv's v1 on
   three of four cards checked, and there is no network here, so arXiv is not the
-  fallback either. All three stats cards have a `.bin` and `show_eprint.py` was
-  verified working on all three, 2026-09-04.
-
-  *Corrected 2026-09-04: this paragraph said `show_eprint.py` "reads what the
-  curator actually parsed". It reads the raw tarball. What the curator parsed is
-  the window `pdf_extract.py` cut out of that tarball, and patches 1 and 2 moved
-  that window on eleven of the 28 cards. On those eleven the sentence as written
-  sends you to compare a card against a source it was not built from.*
+  fallback either. `show_eprint.py` reads what the curator actually parsed; all
+  three stats cards have a `.bin` and the tool was verified working 2026-09-04.
 
   Two of the three are in D0's defective-window set, which is why they are named
   separately above: on 2411.02771 and 2608.16017 a discrepancy between card and
   source may be the extractor's, not the curator's. Scoring either `n` for
   absence without checking the window first files a curator defect against an
-  extraction bug.
-
-  **Which it is, per card, re-derived 2026-09-04** by reconstructing the
-  pre-patch-1 extractor from `ingest/pdf_extract.py.pre-patch.bak` and diffing
-  it against the current one — `python3 ingest/window_diff.py --domain stats`,
-  and `--all-affected` for D0's eleven:
-
-  | Card | `sections_read` | Was | Now | Read it how |
-  |---|---|---|---|---|
-  | 2512.16061 | abstract, intro | — | unchanged | comparable as it stands; an `n` for absence is safe |
-  | 2608.16017 | abstract, intro | conclusion 0 | 1,451 | the conclusion is new text; `u`/`out-of-window`, not `n` |
-  | 2411.02771 | abstract, conclusion | intro 0 | 16,053 | see below; conclusion also lost 726 chars to patch 1's boundary |
-
-  So 2512.16061 first, not just because E1 already lists it first: it is the one
-  stats card where card and source are the same pair the curator saw, and the
-  only one where a disagreement is unambiguously the curator's.
-
-  **2411.02771 is a curator win, and it is recorded nowhere else.** The old
-  extractor returned `missing: {}` — nothing missing — while handing over a
-  0-char intro. The card's `sections_read` is `["abstract", "conclusion"]`. The
-  curator was told it had the introduction, was given nothing, and said so.
-  Read the card against `sections_read`, not against today's 16,053 chars;
-  anything living only in that delta is `u` with reason `out-of-window`
-  (`CARD-EVAL-HANDOFF.md` §7.5), which keeps the defect countable instead of
-  filing an extraction bug against a curator that behaved correctly.
-
-  *Corrected 2026-09-04: this paragraph described 2411.02771 as the card whose
-  "intro was reported as found while coming back empty, so the card was built
-  without it". Both halves are true of the extractor and the second reads as a
-  mark against the card. Patch 2 has since closed the empty intro; the live
-  defect on that card is now truncation at `MAX_SECTION_CHARS`.*
+  extraction bug — and 2411.02771's intro was reported as found while coming
+  back empty, so the card was built without it.
 
   Numbered `E1` on 2026-09-04 because E6 is gated by an `E1` that exists nowhere
   in the repo and this is the prerequisite it needs. **Confirm that reading** —
@@ -156,50 +119,15 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
   anything."*
   **Gates:** E6
 
-- [x] **E5.** Smoke-test the eval path as pure debugging —
-  **RUN 2026-09-04. `import` → `label` → `score` completes end to end.**
+- [ ] **E5.** Smoke-test the eval path as pure debugging
 
   - [x] `python3 ingest/show_eprint.py 2506.07459 --list` — run 2026-09-04, works
-  - [x] `card_eval.py import` each of the four files in `eval/drafts/`
-  - [x] Walk one card through `label`
-  - [x] `card_eval.py score`, pooled and `--domain`
+  - [ ] `card_eval.py import` each of the four files in `eval/drafts/`
+  - [ ] Walk one card through `label`
+  - [ ] `card_eval.py score`
 
-  Run in a scratch copy of the repo, deliberately: a `score` here writes
-  `eval/card_runs/<ts>.json`, and `CLAUDE.md` line 13 designates *"check
-  whether `eval/card_runs/` is empty"* as the test of whether the measurement
-  has happened. A debugging run that answers that test in the affirmative
-  destroys the one signal the line exists to carry. **`eval/card_runs/` is
-  still absent on disk and should stay that way until E6.**
-
-  What it found, in the order a reader needs it:
-
-  - **Three of §6's four `import` commands are no-ops.** 2606.07914,
-    2506.07459 and 2601.03123 skip as already-judged; only 2608.17381 loads.
-    §3 predicted exactly this and §6 lists four commands without saying so.
-  - **`import` is clean.** Diffed `card_labels.jsonl` before and after: only
-    `drafted` and `labeller` moved, `judgments` byte-identical on all twenty
-    records. The guarantee in §2's table holds.
-  - **`score --domain stats` exits 1** — no judged stats cards — with a message,
-    not a traceback. Correct behaviour, and it means E6 as filed cannot produce
-    a stats number today.
-  - **The pooled run flags `mathematical_objects` at 0.20** as weakest field
-    and prints `unrecorded=2`, then folds those two into every headline anyway.
-    That is E4a observed rather than predicted; option three there — have
-    `score` refuse a headline while any record is unattributed — is the one the
-    run argues for.
-  - Two code defects, both forwarded to **patch 8** rather than described here:
-    `_ask()` has no `EOFError` guard, and `validate_card.py` reports a missing
-    dependency, an invalid card and a nonexistent path with the same exit code.
-
-  **One finding this item cannot close.** E6 is gated by E3; E3 wants curator
-  spend; Tier 4 forbids that spend before E6 produces a number. That is a cycle,
-  and the cheap way out is that `sample --domain stats --append` draws the other
-  two stats cards for zero model calls — verified working, 2 new records, 22
-  total. It yields three stats cards, below `LABEL-USE-PROTOCOL.md` R1's floor
-  of five, and `sample` says so itself. `probability` reaches seven sampled with
-  five left to label and no curation at all. **Which of those E6 runs on is a
-  decision, not a scheduling detail** — `PROJECT-STATUS.md` Tier 1 item 7 says
-  pool or draw probability, E3 says stats, and D9 is gated by E6.
+  Needs no calibration — the point is finding crashes in code that has never
+  executed, not producing numbers.
   **Gates:** E6
 
 - [ ] **E6.** Label the stats cards for real and score them
@@ -359,41 +287,6 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
   `Hermitization (Girko's method)`, `Subset-rank and no-cancellation conditions`
   and `Circuit skeleton / ansatz topology` at write time — all three are real and
   all three currently score `y`.
-
-  **Re-derived 2026-09-04 across all 28 cards: the rule matches ten names, not
-  three, and this is no longer a five-line fix.**
-
-  | Domain | Card | Name |
-  |---|---|---|
-  | compbio_methods | 2406.01756 | Multilevel / tri-level optimization |
-  | compbio_methods | 2410.19208 | Spectral scaling / preconditioning |
-  | compbio_methods | 2502.11152 | Balancedness / approximate balancedness of weights |
-  | compbio_methods | 2509.18530 | Mid-circuit measurement and reset |
-  | compbio_methods | 2601.03123 | Circuit skeleton / ansatz topology |
-  | probability | 2109.02644 | Leave-one-out / resolvent perturbation identities |
-  | probability | 2401.16556 | Convex conjugate / Fenchel duality |
-  | probability | 2410.16457 | Hermitization (Girko's method) |
-  | probability | 2505.00198 | Positive recurrence / stationary distribution |
-  | probability | 2606.07914 | Subset-rank and no-cancellation conditions |
-
-  Two things follow. **The rule has false positives**: `Mid-circuit measurement
-  and reset` is one standard operation in quantum circuits, not two objects
-  welded together, and `Convex conjugate / Fenchel duality` is a single notion
-  under two names — which is `aliases` doing its job, badly placed. A validator
-  that rejects those teaches curators to rename real objects to get past it,
-  which is the failure invariant 11 exists to prevent, arriving through the card
-  instead of the validator.
-
-  **And retroactivity is now a decision.** Ten of 28 cards is 36% of the KB, so
-  the choice is the §7.1 item 1 choice — forward-only with re-curation handed to
-  E7, or a pass over the existing cards that Tier 4 forbids before E6. A
-  validator that rejects at write time and a KB that would not pass it are
-  consistent only if the second is deliberate and written down.
-
-  Cheapest shape that keeps the finding without either cost: **warn, do not
-  reject**, and tally. The three genuine cases are then countable and the seven
-  arguable ones are visible for E7 to rule on, which is what §5.6 item 2 wanted
-  the letter for.
 
 - [ ] **D7.** Apply the canon worksheet marks, and record what moves in the
   triage prompt

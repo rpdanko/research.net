@@ -399,15 +399,8 @@ severity, but dangling references are how a prompt drifts from what it claims.
 
 ## 10. `CLAUDE.md` — two false statements in the file every agent reads first
 
-**Status: APPLIED by patch 6, 2026-09-04.** Both edits below went in verbatim.
-A third instance of Edit B's false sentence was found in `PROJECT-STATUS.md` §2
-and corrected in the same run — it was outside this item's scope, which is why
-nothing had caught it.
-
-`CLAUDE.md` is not in `settings.json`'s deny list, so this never actually needed
-hand application. It sat in the `.claude/**` queue by filing convention. Worth
-remembering for the next item filed here: check the deny list before assuming a
-path needs the slow route.
+**Status:** pending · **do this one first.** It is the cheapest item here and the
+only one that misinforms every agent at boot.
 
 `CLAUDE.md` is the entry point. Both defects are already on record —
 `PROJECT-STATUS.md` Tier 0 item 4 and `ESCALATION-REVIEW.md` §6 item 3 — and

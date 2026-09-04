@@ -6,22 +6,8 @@ record of what Week 3 opened with.
 Everything below was checked against the repo, not carried forward. Where a number is
 derived it says from what. Where something is inferred it says so.
 
-**Environment.** Every script runs with `python3`, not `python` (see §3.5).
-
-*Corrected 2026-09-04: this note said the Linux sandbox does not start on the
-assistant side, so all **[shell]** items run on your machine. It does start, and
-most of E5's path ran there — `card_eval.py import`/`label`/`score`,
-`audit_extraction.py`, `pdf_extract.py`, `show_eprint.py`, `window_diff.py`.*
-
-*Two constraints survive, and they are different from each other. **No
-network:** `backfill_source_pins.py` (D3), E8's version check and
-`verify_citations.py` still have to be yours. **No `pyyaml` or `jsonschema`,
-and `pip install` is denied:** `validate_card.py` and `rebuild_index.py` cannot
-complete there at all, so the convention "a card that does not validate does
-not exist" is unenforceable in that sandbox and every card-validation claim
-made from it is worthless. That is what patch 8's exit 3 makes legible instead
-of leaving it to look like 28 failing cards. And two things are yours by design
-rather than by environment: `.claude/**` edits, and any labelling.*
+**Environment.** The Linux sandbox does not start on the assistant side — **[shell]** items
+run on your machine. Every script runs with `python3`, not `python` (see §3.5).
 
 ---
 
@@ -62,14 +48,8 @@ and the drift is only visible against them.
 schema stops moving."
 
 **Actual.** Four curators have run. 28 validated cards: `probability` 10,
-`compbio_methods` 9, `compbio_mechanism` 6, `stats` 3, re-derived from
-`kb/*/cards/*.md` on 2026-09-04. `ingest/card_eval.py` is written and has never
-been run — **check `ls eval/card_runs/` rather than trusting this sentence.** See
+`compbio_methods` 9, `compbio_mechanism` 6, `stats` 3. `card_eval.py` does not exist. See
 §4.1 — this is the most consequential deviation in the project.
-
-*Corrected 2026-09-04: this paragraph said `card_eval.py` did not exist. It is
-64,177 bytes and answers `--help`. The orientation skill filed the same sentence
-in `CLAUDE.md` line 13 as D1 and did not know it was here too.*
 
 **Measured, and real.** Triage is the one component with a number. Latest scored run
 (`20260827-214656`), corrected for the `2509.18530` label flip: **recall 0.903, precision
@@ -283,9 +263,9 @@ Ordered by what the project's own philosophy says comes first, not by size.
 
 ### Tier 0 — the integrity floor. Cheap, and everything else rests on it.
 
-1. ~~**`git init && git add -A && git commit`**~~ — **done.** `git log` shows ten
-   commits through `d8e8602` "patch 5", and `git status` is clean. The two
-   unrecoverable changes in §4.3 are still lost; everything since is recoverable.
+1. **`git init && git add -A && git commit`** **[shell]**. Thirty seconds. It has already
+   cost the project two unrecoverable changes (§4.3). Do this before any further edits, so
+   today's work is the first commit rather than part of an untracked pile.
 2. ~~Sweep `python ` → `python3 `~~ — **done, all 78 occurrences.** The last 32 under
    `.claude/**` — two skills, seven agent prompts, one `settings.json` comment — were applied
    by hand on 2026-09-01 and verified with `grep -rc 'python ingest/' .claude/`, which now
@@ -293,26 +273,10 @@ Ordered by what the project's own philosophy says comes first, not by size.
 3. ~~Set the emails and add the missing guard~~ — **done** (§4.7). All four scripts carry
    `robinpdanko@gmail.com`; `arxiv_pull.py` now has the guard the other three had.
 4. **Correct `CLAUDE.md`'s phase marker** and point it at this file (§4.8).
-5. **`python3 ingest/canon_tier.py apply`** **[shell]**, then re-render exemplars.
-   Worksheet edits are inert until this runs. **Delta re-derived 2026-09-04 by
-   replicating `apply_marks()` read-only against `canon.jsonl`, and it is wider
-   than this item said** — `apply_marks()` globs every `vetting-*.md`:
-
-   | Worksheet | Marks | Reasons |
-   |---|---|---|
-   | `compbio_mechanism` | 1 — W1993482030 struck → **exemplar** | 1 |
-   | `compbio_methods` | 2 — W2178011284 struck → kept; **W2050834445 exemplar → kept** | 3 |
-   | `stats` | 0 | 1 |
-   | `probability` | 0 | 0 |
-
-   Read `TODO.md` D7 before running it. The `compbio_methods` exemplar demotion
-   changes the triage positive block, and triage is the one measured component
-   here — so this is now paired with Tier 3 item 10 rather than standing alone.
-
-   *Corrected 2026-09-04: this item said two strike reversals and ten rewritten
-   reasons in `compbio_mechanism`. It is one mark and one reason there; the
-   second reversal is in `compbio_methods`, alongside a demotion and three
-   reasons that no list mentioned.*
+5. **`python3 ingest/canon_tier.py apply`** **[shell]**, then re-render exemplars. Today's
+   `compbio_mechanism` worksheet edits — two strike reversals and ten rewritten reasons —
+   are inert until this runs. The two reversed papers are still eligible for the negative
+   block, which is the exact contradiction the ruling removed.
 
 ### Tier 1 — the thing the phase is actually for
 

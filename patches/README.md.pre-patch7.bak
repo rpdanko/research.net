@@ -70,24 +70,7 @@ table is the order of record — the filenames follow it, not the reverse.
 | 4 | `patch-04-card-eval-domain.py` | 2026-09-03 | `ingest/card_eval.py`, `TODO.md`, `PROJECT-STATUS.md` | `TODO.md` D4: `score --domain` scopes the whole run and records the scope in the run file and filename; a pooled run prints a per-domain diagnostic table; `diff` compares only same-scope runs and **refuses** across scopes. Docs: D4 marked applied, E2 closed at 30, `PROJECT-STATUS.md` gains an admitted-queue row and loses four wrong admit counts. Soft NOTE if `card_eval.py` does not parse — needs patch 3 to verify. 12 edits, 3 files. |
 | 5 | `patch-05-loose-findings.py` | 2026-09-03 | `CARD-EVAL-HANDOFF.md`, `RUNBOOK-first-measurement.md`, `TODO.md`, `.claude/skills/orientation/SKILL.md` | Housekeeping. Re-derived §1 and §3's card-status counts against `card_labels.jsonl` (five judged, not two; `drafted` False on all twenty; row 5's marks not actually cleared). Filed **E4a** for the two records with no `labeller`, which are 40% of the judged sample. Marked `RUNBOOK` Phase 0 complete and 0.4 superseded by R8. Installs the orientation skill and deletes the pre-renumber `patch-03-card-eval-domain.py`. 5 edits, 1 install, 1 removal. |
 
-| 6 | `patch-06-orientation-corrections.py` | 2026-09-04 | `PROJECT-STATUS.md`, `CLAUDE.md`, `TODO.md`, `CARD-EVAL-HANDOFF.md`, `dev-notes/curator-prompt-edits-pending.md` | The cold-start orientation correction pass. `TODO.md` D1: `CLAUDE.md` lines 5 and 13 rewritten from §10's staged text, plus the third instance of "`card_eval.py` does not exist" in `PROJECT-STATUS.md` §2, which D1's stated scope did not cover. **Applied but not committed** — `git status` shows five modified files and six untracked `.pre-patch6.bak` at the time row 7 was written. Row added retrospectively 2026-09-04: the patch was written and run without one, and this table is the order of record. |
-| 7 | `patch-07-eval-path-executed.py` | pending | `TODO.md`, `CARD-EVAL-HANDOFF.md`, `PROJECT-STATUS.md`, `patches/README.md` | Documents only, from the first end-to-end run of the card-eval path. Closes E5 with its results; corrects E1's `show_eprint.py` claim and its two named subtasks against a reconstructed pre-patch window; re-derives D6 at ten offending names rather than three and reframes it as a retroactivity decision; retires `PROJECT-STATUS.md`'s environment note; adds ledger rows 6 and 7. Ships `window_diff.py`. 8 edits, 4 files. |
-
 ### Not a patch
-
-`window_diff.py` is a **diagnostic** — run, not applied — and per the rule above
-it is unnumbered and belongs in `ingest/`, moved as part of patch 7:
-
-```bash
-git mv patches/window_diff.py ingest/window_diff.py
-```
-
-It reconstructs the extractor a card was actually written under from
-`ingest/pdf_extract.py.pre-patch.bak` and diffs its window against the current
-one, so a card/source discrepancy can be attributed to the extractor or to the
-curator instead of guessed at. `TODO.md` E1 and D0 both quote its output;
-patch 7's doc edits point at `ingest/window_diff.py`, so those references dangle
-until the move happens.
 
 `orientation-SKILL.md` is staged here only so patch 5 can install it to
 `.claude/skills/orientation/SKILL.md`, a path agents cannot write. Patch 5
