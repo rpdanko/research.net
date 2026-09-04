@@ -7,16 +7,11 @@ picked up cold. Read §1 and §6 first; everything else is reference.
 
 ## 1. Where this stands in one paragraph
 
-`card_eval.py` is written and instrumented. **Corrected 2026-09-03: the counts
-that stood here were wrong, and so was §3's table.** Re-derived from
-`eval/card_labels.jsonl` with `_is_judged`, the file holds **20** records of
-which **5** are fully judged — 2407.01051, 2410.16457, 2606.07914, 2506.07459,
-2601.03123 — and `drafted` is False on every one, so nothing was ever imported.
-Three of those five were described here as drafted-only. Fifteen records are
-untouched. See §3 for the table and E4a for the one open question it leaves.
-
-Whether `score` has been run is answered by `ls eval/card_runs/`, not by this
-paragraph; it was empty until 2026-09-03. The immediate next action is §6.
+`card_eval.py` is written and instrumented. **No cards have been scored yet** —
+`score` has never been run and `eval/card_runs/` is empty. Two cards were judged
+by hand before this session (2407.01051, 2410.16457); four more have **drafted**
+verdicts sitting in `eval/drafts/`, unimported. Fifteen of the twenty-one sampled
+cards have neither. The immediate next action is §6.
 
 The session's real output is not the four drafts. It is a set of findings about
 **why** cards fail, which point at `pdf_extract.py` rather than at curator
@@ -65,37 +60,15 @@ and no card file was deleted.
 
 ## 3. Card status
 
-**Re-derived 2026-09-03 against `eval/card_labels.jsonl` and `_is_judged`.** The
-table that stood here was wrong on three rows and on the total; what follows is
-what the file contains.
-
-| # | arXiv ID | Domain | `_is_judged` | `labeller` | `drafted` |
-|---|---|---|---|---|---|
-| 1 | 2407.01051 | compbio_methods | **yes** | *absent* | no |
-| 2 | 2410.16457 | probability | **yes** | *absent* | no — see §5.4 |
-| 3 | 2606.07914 | probability | **yes** | `user` | no |
-| 4 | 2506.07459 | compbio_mechanism | **yes** | `user` | no |
-| 5 | 2601.03123 | compbio_methods | **yes** | `user` | no |
-| 6 | 2608.17381 | compbio_mechanism | no | — | no |
-| 7–20 | — | — | no | — | no |
-
-Four corrections, each of which mattered:
-
-- **Five records are judged, not two.** Rows 3–5 were listed as "drafted,
-  unimported" and are hand judgments. `drafted` is False on all twenty records,
-  so `import` has never run on anything.
-- **Row 5's marks were not cleared.** §1 recorded them reset to null at your
-  request; it passes the all-fields test, so either the clearing did not happen
-  or it was undone.
-- **Twenty records, not twenty-one.** `sample` drew 20. D2 already flagged this
-  half and it is the half that was right.
-- **Rows 1 and 2 carry no `labeller`.** They predate the field and enter every
-  figure unattributed. That is E4a, not a correction — it needs a ruling.
-
-The four `<id>.json` / `<id>-report.md` pairs in `eval/drafts/` are still
-unimported, and rows 3–5 having been judged by hand means importing them now
-would land on cards you have already ruled on. `import` skips judged cards
-unless `--force`, so the default is safe.
+| # | arXiv ID | Domain | State |
+|---|---|---|---|
+| 1 | 2407.01051 | compbio_methods | **judged** (hand, pre-session) |
+| 2 | 2410.16457 | probability | **judged** (hand, pre-session) — see §5.4, one ruling may need revisiting |
+| 3 | 2606.07914 | probability | **drafted**, unimported |
+| 4 | 2506.07459 | compbio_mechanism | **drafted**, unimported |
+| 5 | 2601.03123 | compbio_methods | **drafted**, unimported; marks cleared |
+| 6 | 2608.17381 | compbio_mechanism | **drafted**, unimported |
+| 7–21 | — | — | **not drafted** (15 cards) |
 
 Each drafted card has two files in `eval/drafts/`: `<id>.json` (importable) and
 `<id>-report.md` (the reasoning, with a numbered quote inventory).

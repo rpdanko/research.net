@@ -37,19 +37,7 @@ appended to its `name:` field so it cannot be dispatched under the old name, but
 `compbio-curator.md` kept its plain `name: compbio-curator` and is still resolvable. The
 description warns; the name is the interface. Worth hardening for symmetry.
 
-> **Phase 0 is COMPLETE. Verified 2026-09-03 — do not re-run 0.2 or 0.3.**
-> `eval/labels.dev.jsonl` holds `expect_in` 62, `expect_out` 86, `borderline` 32
-> = 180, `2608.07528` is `expect_out`, and no row has a null `domain`. So the
-> script below has run and the hand-fix in 0.3 was made.
->
-> Re-running it would fail rather than no-op: `fixup_labels_stratum_domain.py`
-> hardcodes `eval/labels.jsonl`, and R8 renamed that file to
-> `eval/labels.dev.jsonl` on 2026-08-28 — recorded in
-> `charters/compbio_methods.md` line 3, handled in code by
-> `eval_triage.py._resolve_labels`, and **not** reflected in 0.3 or 0.4 below.
-> Read the rest of Phase 0 as a record of what was done, not as instructions.
-
-### 0.2 Fix the label strata — DONE
+### 0.2 Fix the label strata
 
 ```bash
 python3 ingest/fixup_labels_stratum_domain.py
@@ -76,15 +64,7 @@ The script won't guess at a typo it can't place.
 
 **Check:** `grep -c '"stratum": "expect_in"\|"stratum": "expect_out"\|"stratum": "borderline"' eval/labels.jsonl` → **180**.
 
-### 0.4 Do NOT rename labels.jsonl yet — **SUPERSEDED 2026-08-28**
-
-The rename happened, correctly. `charters/compbio_methods.md` line 3 records
-adopting R8 when that charter took its two label-derived changes, which makes the
-180 rows a development set for `compbio_methods` specifically. `stats` is
-unaffected and its charter still carries zero label-derived changes, so it
-remains a valid eval target — which is the whole reason E2/E3/E6 point at it.
-
-The original reasoning, true when written:
+### 0.4 Do NOT rename labels.jsonl yet
 
 `LABEL-USE-PROTOCOL.md` R8's rename only applies once a charter is written *from* the
 labels. `stats.pass4.md` has zero label-derived changes, and the `compbio_methods`

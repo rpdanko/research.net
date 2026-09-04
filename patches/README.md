@@ -65,11 +65,20 @@ table is the order of record — the filenames follow it, not the reverse.
 | # | Patch | Applied | Touches | What it did |
 |---|---|---|---|---|
 | 1 | `patch-01-extractor-boundaries.py` | 2026-09-03 | `ingest/pdf_extract.py`, `TODO.md`, `CARD-EVAL-HANDOFF.md`, `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` | Bounded the extractor at the end of the document proper, with the candidate guard; widened conclusion heading matching; raised `MAX_SECTION_CHARS` to 16000; fixed the truncated missing-section diagnostic. Docs: `TODO.md` D0 added and D2 rewritten, `CARD-EVAL-HANDOFF.md` §5.2 evidence corrected / §5.3 misattribution / §7.1 ruling propagated. 13 edits, 5 files. |
+| 2 | `patch-02-level-aware-sections.py` | 2026-09-03 | `ingest/pdf_extract.py`, `TODO.md`, `CARD-EVAL-HANDOFF.md` | Level-aware slicing: a `\section` body now runs to the next `\section` and absorbs its subsections. Fixes 2411.02771's empty intro (0 to 17,587 chars) and recovers main-results subsections on theory papers (2410.16457, 3,168 to 20,285). Shipped with the cap unchanged at 16,000; three sections clip, but a level-aware slice starts where the flat one did, so every card still receives more than before. Truncation notice now reports true length. **Requires patch 1 and refuses to run without it.** 6 edits, 3 files. |
+| 3 | `patch-03-card-eval-syntax.py` | 2026-09-03 | `ingest/card_eval.py` | **One edit.** `_is_judged`'s docstring closed twice with prose between the delimiters, so the file did not parse and every invocation died before `main()`. Introduced by commit `29b4cff` (2026-09-01 16:42) and unnoticed because nothing had ever run it. Deliberately fixes nothing else — a file never parsed has no reason to hold one error, and each defect gets its own patch so the history stays attributable. 1 edit, 1 file. |
+| 4 | `patch-04-card-eval-domain.py` | 2026-09-03 | `ingest/card_eval.py`, `TODO.md`, `PROJECT-STATUS.md` | `TODO.md` D4: `score --domain` scopes the whole run and records the scope in the run file and filename; a pooled run prints a per-domain diagnostic table; `diff` compares only same-scope runs and **refuses** across scopes. Docs: D4 marked applied, E2 closed at 30, `PROJECT-STATUS.md` gains an admitted-queue row and loses four wrong admit counts. Soft NOTE if `card_eval.py` does not parse — needs patch 3 to verify. 12 edits, 3 files. |
+| 5 | `patch-05-loose-findings.py` | 2026-09-03 | `CARD-EVAL-HANDOFF.md`, `RUNBOOK-first-measurement.md`, `TODO.md`, `.claude/skills/orientation/SKILL.md` | Housekeeping. Re-derived §1 and §3's card-status counts against `card_labels.jsonl` (five judged, not two; `drafted` False on all twenty; row 5's marks not actually cleared). Filed **E4a** for the two records with no `labeller`, which are 40% of the judged sample. Marked `RUNBOOK` Phase 0 complete and 0.4 superseded by R8. Installs the orientation skill and deletes the pre-renumber `patch-03-card-eval-domain.py`. 5 edits, 1 install, 1 removal. |
 
 ### Not a patch
 
-`audit_extraction.py` ships in this directory but **belongs in `ingest/`** —
-move it there before committing patch 1:
+`orientation-SKILL.md` is staged here only so patch 5 can install it to
+`.claude/skills/orientation/SKILL.md`, a path agents cannot write. Patch 5
+consumes it — after that run, the staged copy is gone and the installed one is
+the file.
+
+`audit_extraction.py` shipped here and **belongs in `ingest/`**, moved as part
+of patch 1:
 
 ```bash
 git mv patches/audit_extraction.py ingest/audit_extraction.py

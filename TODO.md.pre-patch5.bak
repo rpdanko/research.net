@@ -77,22 +77,6 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
   something.
   **Gated by:** E2. **Gates:** E6
 
-- [ ] **E4a.** Rule on the two unattributed label records
-
-  2407.01051 and 2410.16457 pass `_is_judged` and carry no `labeller` field —
-  they predate it. `score` reports them as `unrecorded=2` and then folds them
-  into every headline figure without further comment, against `card_eval.py`'s
-  own statement that provenance travels with the number and that a stored 0.82
-  which does not say who produced the labels is the same artifact as
-  `EVAL-01-FINDINGS.md`'s stale figures.
-
-  Three options, and the choice is a judgment about your own past work rather
-  than a code question: stamp them `user` retrospectively if you are confident
-  they were yours; exclude them from scored runs; or leave them and have `score`
-  refuse to print a headline while any record is unattributed. With five judged
-  cards, two of them is 40% of the sample.
-  **Gates:** E6
-
 - [ ] **E4.** Settle `CARD-EVAL-HANDOFF.md` §7.2 and §7.3
 
   Whether `named_in_paper` is renamed or documented, and renaming `score_run()`'s
