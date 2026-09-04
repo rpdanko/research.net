@@ -73,25 +73,7 @@ table is the order of record — the filenames follow it, not the reverse.
 | 6 | `patch-06-orientation-corrections.py` | 2026-09-04 | `PROJECT-STATUS.md`, `CLAUDE.md`, `TODO.md`, `CARD-EVAL-HANDOFF.md`, `dev-notes/curator-prompt-edits-pending.md` | The cold-start orientation correction pass. `TODO.md` D1: `CLAUDE.md` lines 5 and 13 rewritten from §10's staged text, plus the third instance of "`card_eval.py` does not exist" in `PROJECT-STATUS.md` §2, which D1's stated scope did not cover. **Applied but not committed** — `git status` shows five modified files and six untracked `.pre-patch6.bak` at the time row 7 was written. Row added retrospectively 2026-09-04: the patch was written and run without one, and this table is the order of record. |
 | 7 | `patch-07-eval-path-executed.py` | pending | `TODO.md`, `CARD-EVAL-HANDOFF.md`, `PROJECT-STATUS.md`, `patches/README.md` | Documents only, from the first end-to-end run of the card-eval path. Closes E5 with its results; corrects E1's `show_eprint.py` claim and its two named subtasks against a reconstructed pre-patch window; re-derives D6 at ten offending names rather than three and reframes it as a retroactivity decision; retires `PROJECT-STATUS.md`'s environment note; adds ledger rows 6 and 7. Ships `window_diff.py`. 8 edits, 4 files. |
 
-| 8 | `patch-08-failure-modes.py` | pending | `ingest/validate_card.py`, `ingest/rebuild_index.py`, `ingest/card_eval.py`, `ingest/audit_extraction.py` | Separates three failures that reported identically. `validate_card.py` gains exit 3 for environment/invocation failure so a missing `pyyaml` no longer reads as 28 invalid cards, and a path that is not a file is reported instead of skipped — an unexpanded glob used to print `all cards valid` and exit 0. `rebuild_index.py`'s shared import re-raises as the same 3. `_ask()` treats EOF as `q` rather than a traceback mid-labelling. `audit_extraction.py`'s footer no longer claims an empty section that patch 2 closed is still open. Invariant 17's exit-2-vs-1 ruling, applied where it was not written. 6 edits, 4 files. |
-| 9 | `patch-09-pmd-interface.py` | pending | `TODO.md`, `PROJECT-STATUS.md`, `patches/README.md`, `dev-notes/curator-prompt-edits-pending.md` | Writes the `pmd` dashboard contract into `TODO.md`'s header as a parse with named failure modes, repairs the two wrapped subtasks patch 7 introduced, adds an actor statement to E1, files D10 for the patch queue and the commit, adds three verified-state rows to `PROJECT-STATUS.md` §3, and corrects the inventory row for dev-note item 10 which patch 6 left contradicting its own body. Ships `pmd_check.py`. Adds no `.pmd.conf`: rung 3 fits. 7 edits, 4 files. |
-
 ### Not a patch
-
-`pmd_check.py` is a **diagnostic** and belongs in `ingest/`, moved as part of
-patch 9:
-
-```bash
-git mv patches/pmd_check.py ingest/pmd_check.py
-```
-
-It implements `pmd`'s documented resolution and validates `TODO.md` against the
-contract now recorded in that file's header — one unchecked top-level box, a
-step line under 90 characters, one subtask per line, estimates on the box line
-— exiting 1 when the dashboard would show nothing or the wrong thing and 3 when
-it cannot tell. The exit codes match `validate_card.py`'s after patch 8, for
-the same reason. It earned its place before it was committed: patch 7 broke the
-subtask rule and this script found it, where two readings by eye had not.
 
 `window_diff.py` is a **diagnostic** — run, not applied — and per the rule above
 it is unnumbered and belongs in `ingest/`, moved as part of patch 7:

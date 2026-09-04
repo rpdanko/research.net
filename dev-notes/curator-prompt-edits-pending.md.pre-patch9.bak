@@ -20,14 +20,7 @@ from the notes that raised them. Status column reflects that check.
 | 7 | Tell curators to use `card_notes` | all four `*-curator.md` | ESCALATION-REVIEW #4 | **applied 2026-09-01**, all four verified |
 | 8 | `1. Run Run` duplication | `compbio-mechanism-curator.md:16` | this session | **applied 2026-09-01** |
 | 9 | Missing blank line before line 53 | `compbio-mechanism-curator.md:52–53` | this session | pending — one keystroke |
-| 10 | Two false statements about current state | `CLAUDE.md` lines 5, 13 | PROJECT-STATUS Tier 0 item 4; ESCALATION-REVIEW #3 | **applied by patch 6, 2026-09-04** |
-| 11 | Router edits: pmd contract, patch ledger, trap-list corrections | `.claude/skills/orientation/SKILL.md` | this session | pending — see §11 |
-
-*Row 10 corrected 2026-09-04. It read "pending — **highest value on this
-list**" while §10's own body had said "APPLIED by patch 6" since that patch ran.
-Patch 6 updated the body and not the table the body is indexed from, which is
-the D1 lesson — a fact fixed in the one place it was noticed — committed by the
-patch that recorded the lesson.*
+| 10 | Two false statements about current state | `CLAUDE.md` lines 5, 13 | PROJECT-STATUS Tier 0 item 4; ESCALATION-REVIEW #3 | pending — **highest value on this list** |
 
 ---
 
@@ -456,71 +449,6 @@ docstring warns about: "a number written down once and never re-derived."
 Lines 9–11 carry the ingest/triage figures with a run id attached
 (`eval/runs/20260827-214656`). That is sourced correctly and should stay as it
 is. The `Layout` block's `.claude/` line was not verified against a file count.
-
----
-
-## 11. `orientation/SKILL.md` — the router, after the 2026-09-04 session
-
-Three edits. The skill is the first thing a cold session reads, and two of its
-trap entries have become folklore: the tasks behind them have landed, so the
-entries now warn about sentences that no longer exist. Its own maintenance rule
-says to **delete rather than update** an entry when its task lands, and that an
-entry with no task behind it is not a trap but a fact.
-
-### Edit A — delete two entries from "Statements known to be false"
-
-Both are `D1`, applied by patch 6 on 2026-09-04. Delete these two bullets:
-
-- the `CLAUDE.md` line 5 bullet — names `WEEK-1-PLAN.md` as the active phase
-- the `CLAUDE.md` line 13 bullet — says `card_eval.py` does not exist
-
-Line 5 now points at `TODO.md` and `PROJECT-STATUS.md` and says the week plans
-are records; line 13 now says `card_eval.py` is written-but-never-run and tells
-the reader to check `eval/card_runs/` instead of believing the sentence.
-
-### Edit B — replace the `OPEN-QUESTIONS.md` environment bullet
-
-It quotes *"the Linux sandbox will not start on this machine, so anything marked
-**[shell]** has to run on your side."* That sentence is not in
-`OPEN-QUESTIONS.md`; the note there already reads "test this rather than
-believing it" and carries both caveats. The trap is now in the router only.
-Replace the bullet with:
-
-> - **Any "the sandbox does not start" claim.** Test it. It has been false in
->   at least two sessions (2026-09-03 read-only; 2026-09-04 the whole eval
->   path). `PROJECT-STATUS.md`'s copy was corrected by patch 7 and
->   `OPEN-QUESTIONS.md`'s was already right; the three surviving copies are in
->   `WEEK-2-PLAN.md`, `WEEK-3-PLAN.md` and `WEEK-3-HANDOFF.md`, which are
->   superseded records. Two constraints hold even when it starts: **no network**
->   — arXiv and OpenAlex work is the user's — and **no `pyyaml`/`jsonschema`
->   with `pip install` denied**, so `validate_card.py` and `rebuild_index.py`
->   cannot complete there and no card-validation claim made from that sandbox
->   means anything. A sandbox also holds a *copy*: state-mutating runs do not
->   transfer.
-
-### Edit C — two lines into "Session-start checks"
-
-The first because the ledger is the authority on whether the code on disk
-matches the documents, and a session that starts without reading it can act on
-a document a pending patch has not yet corrected. The second because the pmd
-parse fails silently and its failure looks like a project with nothing to do.
-
-```bash
-grep -n 'pending' patches/README.md                       # patches written but not applied
-python3 ingest/pmd_check.py                               # will the dashboard show anything
-```
-
-And in the reading order, after step 2 (`TODO.md`), add: *its header states the
-`pmd` contract, which is a parse — `pmd_check.py` checks it, and closing the
-next step without promoting a backlog item in the same edit blanks the
-dashboard.*
-
-### Not proposed
-
-Nothing about the patch queue's *contents* goes in this file. The skill holds
-reading order, supersession and traps, and a queue is state — it belongs in
-`PROJECT-STATUS.md` §3, which patch 9 gives it. Adding it here would make the
-router the seventeenth stale document, which is the thing it exists to prevent.
 
 ---
 

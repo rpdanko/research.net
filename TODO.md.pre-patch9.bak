@@ -6,44 +6,6 @@ there: a short imperative title, the procedure in indented subtasks, the
 reasoning in indented prose beneath. Backlog items are counted but never
 surfaced — promote one up when it becomes the next thing.
 
-### The pmd contract — it is a parse, so treat it like one
-
-`pmd` resolves a next step by trying four rungs and taking the first hit:
-`.pmd/collect`, then `.pmd.conf`, then a `## Next step` heading — or failing
-that the first unchecked box — in `TODO.md`, `NOTES.md`, `TASKS.md`, `NEXT.md`
-or `README.md`, then nothing. **This repo is on rung 3 and deliberately has no
-`.pmd.conf`**: rung 3 is the lowest-effort rung that fits, and a config file
-would be one more thing to keep true. Verify with `python3
-ingest/pmd_check.py`, which implements the resolution and exits non-zero if
-this file no longer parses.
-
-The rules, and each one is a way the parse fails rather than a style
-preference:
-
-- **Exactly one unchecked top-level box under `## Next step`.** pmd takes the
-  first; a second is invisible rather than queued.
-- **Never leave the heading with zero unchecked boxes.** This is the failure
-  that blanks the dashboard, and it is what finishing a task looks like from
-  the inside. With *no* heading pmd falls back to the first unchecked box
-  anywhere in the file and still reports something; with the heading present
-  and empty there is nothing to fall back to. **Close the next step and promote
-  a backlog item in the same edit, never in two.**
-- **The step line is a title, under 90 characters**, one imperative clause, no
-  colon introducing a procedure and no rationale. It is the only line the
-  dashboard shows.
-- **One subtask per line.** A wrapped continuation line is not a box, so it
-  parses as context and any `~estimate` on it is lost. Patch 7 broke this on
-  two of E1's subtasks and patch 9 repaired it; `pmd_check.py` exists because
-  neither the author nor the reviewer noticed.
-- **Estimates go on the box line** — `~30m`, `~6h`, `~3d`, `~2w`; days are 8h,
-  weeks 40. The top-level one is the one that matters; subtask estimates only
-  where there is a basis.
-- **Actor.** Some items only the user can do — labelling, anything under
-  `[shell]` that needs the network, `.claude/**` edits. Say so in the prose
-  beneath, not in the step line: a session reads the whole file and pmd hides
-  everything under the step, so the step line should not spend characters on a
-  marker its only reader does not need.
-
 **Two task types.** *Evaluation* (`E`) asks whether the system's judgment is
 right. *Development* (`D`) builds or fixes the machinery. They are separated
 because this project has already let the second outrun the first: `CLAUDE.md`
@@ -67,18 +29,12 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
 - [ ] **E1.** Read the three stats cards and four draft reports before labelling ~2h
   - [x] Smoke-test `python3 ingest/show_eprint.py 2506.07459 --list` ~5m
   - [ ] Read `kb/stats/cards/2512.16061.md` against `show_eprint.py 2512.16061` ~20m
-  - [ ] Read `kb/stats/cards/2411.02771.md` — window note below first ~20m
-  - [ ] Read `kb/stats/cards/2608.16017.md` — window note below first ~20m
+  - [ ] Read `kb/stats/cards/2411.02771.md` — window changed most; read the
+        window note below before scoring anything `n` ~20m
+  - [ ] Read `kb/stats/cards/2608.16017.md` — gained a 1,451-char conclusion
+        the curator never saw ~20m
   - [ ] Audit the quote inventory in `eval/drafts/2606.07914-report.md` ~30m
   - [ ] Read the other three reports in `eval/drafts/` ~30m
-
-  **Yours, and not delegable.** A session may pull quotes, run
-  `ingest/window_diff.py`, and say where a claim sits in the source. It may not
-  supply verdicts for stats cards — `.claude/skills/orientation/SKILL.md`
-  forbids it, because `import` turns a drafted verdict into a press-enter
-  default and E1 exists to form a standard rather than inherit one. A session
-  that reads this item as its own task is about to manufacture the zero-override
-  run `score_run()` reports as uninterpretable.
 
   Statistics is the domain you can referee unaided, so the stats cards come
   first — they are where you form a standard rather than inherit one. The draft
@@ -499,27 +455,3 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
   `OPEN-QUESTIONS.md`.
   **Gated by:** E6 — deliberately, since that run is expected to produce a bug
   list which is itself content for these files.
-
-- [ ] **D10.** Consume the patch queue and commit ~30m **[shell]**
-
-  - [ ] `git mv patches/window_diff.py ingest/window_diff.py`
-  - [ ] `git mv patches/pmd_check.py ingest/pmd_check.py`
-  - [ ] `git add -A && git commit` — patch 6 has been applied and uncommitted
-        since 2026-09-04
-  - [ ] Delete patches 1–9 once committed, leaving the ledger rows
-
-  Ungated, and the first thing a session should look at before anything else:
-  `patches/README.md`'s ledger is the authority on what is applied and what is
-  merely written, and `Applied: pending` there means the code on disk is not
-  what the documents describe.
-
-  Nine patch files are in `patches/` and none has been deleted, against that
-  file's own rule — *"Patches are consumed, not maintained. Once applied and
-  committed, a patch is a record; delete it when its content has landed in the
-  documents it edited"* — with the numbering gap as the surviving record. The
-  two diagnostics are the exception and must be moved rather than deleted:
-  they are run, not applied, and they outlive the patches that delivered them.
-
-  The commit is `PROJECT-STATUS.md` §5 Tier 0 item 1, which reads as done
-  because `git log` shows ten commits. It was done, and then five files were
-  modified without one.

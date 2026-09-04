@@ -111,9 +111,6 @@ first is due now; the rest are phase-gated.
 | Sampler | `random.shuffle(picks)` fix applied; safe to draw a fresh set |
 | `settings.json` | Correct — `Edit` denies present, `Bash` allows use `python3` |
 | `strike_superseded` | Implemented in `canon_index.py` (EVAL-01 §4B/B2 landed at some point) |
-| `pmd` interface | Rung 3, live and parsing. `TODO.md` line 27 heading; pmd resolves E1, 6 subtasks, 30 open items, `## Backlog` counted. No `.pmd.conf` by decision — rung 3 fits and a config file is one more thing to keep true. Contract written into `TODO.md`'s header 2026-09-04 and checkable with `python3 ingest/pmd_check.py`, which exits 1 if the parse breaks. It broke once, four hours after being documented — patch 7's wrapped subtasks, repaired by patch 9 |
-| Patch queue | **The authority is `patches/README.md`'s ledger, not this row.** `Applied: pending` there means the code on disk is not what the documents describe. As of 2026-09-04: 1–6 applied, 7–9 written and verified against a scratch copy, 6 applied-but-uncommitted. Two diagnostics staged in `patches/` awaiting `git mv` into `ingest/`: `window_diff.py`, `pmd_check.py` |
-| Git | Ten commits through `d8e8602` "patch 5". **Working tree dirty since 2026-09-04** — patch 6's five modified files and its `.pre-patch6.bak` set, uncommitted. Tier 0 item 1 reads as done and is no longer. `TODO.md` D10 |
 
 ---
 
