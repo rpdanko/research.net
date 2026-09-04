@@ -83,11 +83,10 @@ first is due now; the rest are phase-gated.
 | Thing | State |
 |---|---|
 | Labels | 180 rows, strata normalized, `domain` backfilled, zero nulls |
-| Per-domain labels | 180 rows in `eval/labels.dev.jsonl` (R8-renamed): `compbio_methods` 101 · `stats` 40 · `probability` 29 · `compbio_mechanism` 10. **The admit counts previously in this cell — 26/26/17/3 — were wrong in all four and are removed, 2026-09-03.** `papers.sqlite` `status='admitted'` gives 35/33/18/8; `stratum: expect_in` gives 21/25/13/3; `my_score>=4` gives 26/26/17/3. The old cell was the third of those, labelled as the first — and `compbio_methods` reading 26 is the *queue* depth in an admit-count column. See the Admitted queues row |
+| Per-domain labels | `compbio_methods` 101/26 admits · `stats` 40/26 · `probability` 29/17 · `compbio_mechanism` 10/3 |
 | Charters | All four live; `stats` pass-4 promoted; `compbio_mechanism` has a rewrite-prep with all four rulings made |
 | Canon | Tier 0/1/2 built; `compbio_mechanism` worksheet edited today, **not yet propagated** |
 | Scripts | `run_triage`, `apply_triage`, `pdf_extract`, `rebuild_index` all written and exercised. `pdf_extract` was exercised *and defective*: six of 28 cards were built from a short window, fixed 2026-09-03 (`TODO.md` D0). Exercised is not measured |
-| Admitted queues | Derived 2026-09-03 from `papers.sqlite` `status='admitted'` minus cards on disk, the same method behind `WEEK-3-PLAN.md`'s figures: **stats 30** (33 admitted, 3 curated) · compbio_methods 26 · probability 8 · compbio_mechanism 2. E2's worry that the `stats` queue might be thin is answered — it is the deepest reserve relative to what has been curated, so E3 is not size-constrained |
 | Sampler | `random.shuffle(picks)` fix applied; safe to draw a fresh set |
 | `settings.json` | Correct — `Edit` denies present, `Bash` allows use `python3` |
 | `strike_superseded` | Implemented in `canon_index.py` (EVAL-01 §4B/B2 landed at some point) |

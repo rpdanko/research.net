@@ -47,17 +47,7 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
 
 ### Evaluation — is the system's judgment right?
 
-- [x] **E2.** Check how deep the `stats` admitted queue is — **ANSWERED 2026-09-03: 30**
-
-  33 admitted in `papers.sqlite`, 3 curated. Same method as `WEEK-3-PLAN.md`'s
-  figures for the other domains (`status='admitted'` minus cards on disk),
-  verified against its `probability`: 8 queued (18 admitted, 10 curated). So the
-  premise below is wrong in the good direction — the queue is the deepest
-  per-domain reserve in the project relative to what has been curated, and E3 is
-  not size-constrained. At `MAX_CARDS_PER_DOMAIN_PER_DAY=10`, a target of 15–20
-  is two days of curation. Nothing here is a finding about triage or the charter.
-
-  Original text, kept because its reasoning about *why* stats still stands:
+- [ ] **E2.** Check how deep the `stats` admitted queue is
 
   Decides the target size for the first measurement. Statistics is the domain to
   measure on two independent grounds: it is the one you can referee unaided
@@ -212,23 +202,14 @@ Reasoning lives in `PROJECT-STATUS.md`, `OPEN-QUESTIONS.md` and
   until this runs.
   **Gates:** E8, E9
 
-- [ ] **D4.** Add a `--domain` filter to `card_eval.py score` —
-  **APPLIED by patch 4, 2026-09-03** (`patches/patch-04-card-eval-domain.py`)
+- [ ] **D4.** Add a `--domain` filter to `card_eval.py score`
 
-  `score_run()` split by field, by `named_in_paper` and by confidence, but never
+  `score_run()` splits by field, by `named_in_paper` and by confidence, but never
   by domain — so a `card_labels.jsonl` holding both the existing 20 cross-domain
-  records and a new stats sample yielded one blended figure with no way to
-  recover the stats number. `sample` writes only to the fixed `LABELS` path, so a
-  separate file was not the easy way out.
-
-  What landed: `score --domain <d>` scopes the whole run and records the scope in
-  the run file and its filename; a pooled run prints a per-domain diagnostic
-  table; and `diff` now compares only runs of the same scope and **refuses**
-  across scopes rather than warning, because it selects by filename order and
-  would otherwise report a change of population as a change in card quality.
-
-  Not encoded, deliberately: any threshold for what counts as good enough per
-  domain. That is E7's.
+  records and a new stats sample yields one blended figure with no way to recover
+  the stats number. `sample` writes only to the fixed `LABELS` path, so a
+  separate file is not the easy way out. Small change; it is what makes E6
+  answerable.
   **Gates:** E6
 
 - [ ] **D5.** Insert a blank line at `compbio-mechanism-curator.md` 52/53
