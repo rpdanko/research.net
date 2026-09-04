@@ -9,38 +9,16 @@ Fail loudly here instead.
     python3 ingest/validate_card.py kb/stats/cards/2608.01234.md
     python3 ingest/validate_card.py kb/*/cards/*.md --new-only
 
-EXIT CODES, and they are three rather than two on purpose
-
-    0   every card checked passed the schema
-    1   a card failed the schema -- the card is wrong
-    3   this script could not run the check -- the ENVIRONMENT is wrong:
-        a missing dependency, or a path that is not a file
-
-Invariant 17 rules on exactly this distinction for citations: "Unreachable is
-not fabricated (exit 2 vs exit 1); collapsing those two would make every
-network outage look like mass invention." The same collapse here is worse,
-because `card_schema.json` and this docstring both say "A card that does not
-validate does not exist" -- so a missing pyyaml, reported as exit 1, does not
-invalidate one card, it invalidates the knowledge base.
-
-3 rather than 2 because `verify_citations.py` already uses 2 for "unreachable".
-Two scripts disagreeing about what a code means is the problem, not the fix.
+Exit 0 if all pass, 1 otherwise.
 """
 
 import argparse, json, sys, re
 from pathlib import Path
 
-# Exit 3, not the implicit 1 of sys.exit(str): see the exit-code block above.
-# This is an environment failure and must not be legible as an invalid card.
-ENV_FAILURE = 3
-
 try:
     import yaml, jsonschema
 except ImportError:
-    print("pip install pyyaml jsonschema", file=sys.stderr)
-    print("  (exit 3 = this script could not run, NOT 'the cards are invalid')",
-          file=sys.stderr)
-    sys.exit(ENV_FAILURE)
+    sys.exit("pip install pyyaml jsonschema")
 
 SCHEMA = json.loads((Path(__file__).parent / "card_schema.json").read_text())
 FM = re.compile(r"\A---\n(.*?)\n---\n", re.S)
@@ -97,20 +75,13 @@ def main():
     import time
     cutoff = time.time() - 86400
     failed = 0
-    checked = 0
-    unreadable = []
 
     for path in a.paths:
         f = Path(path)
         if not f.is_file():
-            # NOT `continue`. A path that is not a file used to be skipped, so
-            # an unexpanded glob or a wrong cwd printed "all cards valid" and
-            # exited 0 -- a gate reporting success for having checked nothing.
-            unreadable.append(path)
             continue
         if a.new_only and f.stat().st_mtime < cutoff:
             continue
-        checked += 1
         problems = check(f)
         if problems:
             failed += 1
@@ -118,24 +89,7 @@ def main():
             for pr in problems:
                 print(f"     {pr}")
 
-    if unreadable:
-        print(f"\nCANNOT READ {len(unreadable)} path(s) -- not files:",
-              file=sys.stderr)
-        for path in unreadable:
-            print(f"     {path}", file=sys.stderr)
-        print("  An unexpanded glob looks exactly like this. Nothing was\n"
-              "  checked for these, and 'nothing checked' is not 'all valid'.",
-              file=sys.stderr)
-
-    if failed:
-        print(f"\n{failed} card(s) failed")
-    elif checked:
-        print(f"all {checked} card(s) valid")
-    else:
-        print("\nNO CARDS CHECKED.", file=sys.stderr)
-
-    if unreadable or not checked:
-        sys.exit(ENV_FAILURE)
+    print(f"\n{failed} card(s) failed" if failed else "all cards valid")
     sys.exit(1 if failed else 0)
 
 

@@ -382,19 +382,7 @@ def _wrap(s, width=78, indent="    "):
 
 def _ask(prompt, valid, default=None):
     while True:
-        try:
-            v = input(prompt).strip().lower()
-        except EOFError:
-            # Ctrl-D used to raise out of the middle of a labelling session as
-            # a traceback. `_save()` runs per field so nothing was ever lost,
-            # but the screen said otherwise at the moment the user is deciding
-            # whether to trust this tool with two hours of judgment. `q`
-            # already means save-and-quit; EOF means the same thing.
-            if "q" in valid:
-                print("\n  (EOF -- treating as `q`: saving and quitting)")
-                return "q"
-            print("\n  (EOF with no quit option here -- aborting)")
-            raise KeyboardInterrupt
+        v = input(prompt).strip().lower()
         if not v and default is not None:
             return default
         if v in valid:

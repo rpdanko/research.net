@@ -104,18 +104,7 @@ MERGED = KB / "concordance.merged.jsonl"
 DOMAINS = ("stats", "probability", "compbio_methods", "compbio_mechanism", "math")
 
 sys.path.insert(0, str(Path(__file__).parent))
-# Deliberately the same parser, not a second copy -- but the import carries
-# validate_card.py's dependency failure with it, and used to fire as a bare
-# exit before argparse ran, on every invocation including ones that validate
-# nothing. Re-raised as its exit 3 so a caller can still tell "the environment
-# is wrong" from "a card is wrong". See patch 8 and invariant 17.
-try:
-    from validate_card import check as full_check, FM  # noqa: E402
-except SystemExit:
-    print("rebuild_index.py needs validate_card.py's dependencies: "
-          "pip install pyyaml jsonschema", file=sys.stderr)
-    print("  (exit 3 = could not run, NOT 'the index is wrong')", file=sys.stderr)
-    sys.exit(3)
+from validate_card import check as full_check, FM  # noqa: E402  same parser, not a second copy
 
 SCHEMA = json.loads((ROOT / "ingest" / "card_schema.json").read_text())
 REQUIRED = SCHEMA["required"]
